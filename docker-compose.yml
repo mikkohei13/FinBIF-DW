@@ -1,0 +1,54 @@
+
+version: '3.1'
+
+
+services:
+
+    web:
+#        image: php:7-apache-buster
+
+        # https://github.com/thecodingmachine/docker-images-php
+        image: thecodingmachine/php:7.2-v2-apache
+
+        container_name: finbif-dw-web
+#        env_file:
+#            - .env
+#        environment:
+#            PHP_EXTENSION_MONGODB: 1
+#            PHP_EXTENSION_XDEBUG: 1
+        ports:
+            - 80:80
+        volumes:
+            - ./www:/var/www
+#            - ./env:/var/env
+
+    mysql:
+        image: mysql:8.0
+
+        container_name: finbif-dw-mysql
+        command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: hartolanMarkkinat
+
+#        env_file: 
+#            - ./env/.env-mysql
+        ports:
+            - 3306:3306
+        volumes:
+#            - ./mysqldump:/docker-entrypoint-initdb.d
+            - finbif-dw-mysql-volume:/var/lib/mysql
+
+    adminer:
+        image: adminer:4.7
+
+        container_name: finbif-dw-adminer
+        ports:
+            - 8080:8080
+        environment:
+            ADMINER_DESIGN: lucas-sandery
+        depends_on: 
+            - mysql
+
+volumes:
+    finbif-dw-mysql-volume:
