@@ -239,9 +239,9 @@ FRESH PUSH
   - Push to db (id, hash, timestamp), making an insert or update as needed
 
 DAILY UPDATE
-- Fetch obs updated since update timg read from file
+- Fetch obs updated since update timg read from db
 - Foreach obs as above
-- Save update time to file
+- Save update time to db
 
 MONTHLY UPDATE
 * This can be run monthly or as needed
@@ -258,14 +258,14 @@ MONTHLY UPDATE
     - If not found
       - Convert to DW format
       - Push to DW
-  - Push to db (monthlyUpdate = 1), to mark that has been handled
+  - Push to db (status = 1), to mark that has been handled
 
 MONTHLY DELETION
 - Foreach in database
-- If monthlyUpdate != 1
+- If status != 1
   - Delete from DW
   - Delete from database (to prevent unneeded deletions later)
-- Set monthlyupdate = NULL for all (so that they will be checked for deletion next time)
+- Set status = 0 for all (so that they will be checked for deletion next time)
 
 
 How to handle problems during the process?
