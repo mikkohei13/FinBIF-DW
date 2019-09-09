@@ -1,7 +1,7 @@
 <?php
 
 require_once "mysql.php";
-require_once "readINat.php";
+//require_once "readINat.php";
 require_once "postToAPI.php";
 require_once "log2.php";
 
