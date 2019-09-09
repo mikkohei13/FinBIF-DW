@@ -1,8 +1,12 @@
 <?php
 
+// todo: test that all methods return proper error data
+// todo: Try/Catch error handling
+
 class mysqlDb
 {
     public $conn = FALSE;
+    public $error = FALSE;
 
     public function connect($database) {
         $server = "mysql";
@@ -12,7 +16,8 @@ class mysqlDb
         $this->conn = mysqli_connect($server, $user, $password, $database);
 
         if ($this->conn->connect_error) {
-            return "Database connection failed: " . $this->conn->connect_error;
+            $this->error = "Database connection failed: " . $this->conn->connect_error;
+            return FALSE;
         }
         else {
             return TRUE;
@@ -36,7 +41,8 @@ class mysqlDb
             return TRUE;
         }
         else {
-            return "Error updating latest_update time: " . $this->conn->error;
+            $this->error = "Error updating latest_update time: " . $this->conn->error;
+            return FALSE;
         }
     }
 
@@ -57,20 +63,24 @@ class mysqlDb
             return $arr['timestamp'];
         }
         else {
-            return "Error getting latest_update time: " . $this->conn->error;
+            $this->error = "Error getting latest_update time: " . $this->conn->error;
+            return FALSE;
         }
     }
 
     public function push($id, $hash = "", $status = 0) {
-        if ($this->doesIDExist($id)) {
+        $IDExists = $this->doesIDExist($id); 
+        if (TRUE === $IDExists) {
             // UPDATE
-            $ret = $this->update($id, $hash, $status);
+            return $this->update($id, $hash, $status);
+        }
+        elseif (NULL === $IDExists) {
+            // INSERT
+            return $this->insert($id, $hash, $status);
         }
         else {
-            // INSERT
-            $ret = $this->insert($id, $hash, $status);
+            return FALSE;
         }
-        return $ret;
     }
 
     public function doesIDExist($id) {
@@ -81,11 +91,43 @@ class mysqlDb
 
         $result = $this->conn->query($sql);
 
-        $rowCount = mysqli_num_rows($result);
-        if ($rowCount > 0) {
-            return TRUE;
+        if ($result) {
+            $rowCount = mysqli_num_rows($result);
+            if ($rowCount > 0) {
+                return TRUE;
+            }
+            else {
+                return NULL;
+            }
         }
         else {
+            $this->error = "Error finding id: " . $this->conn->error;
+            return FALSE;
+        }
+    }
+
+    public function doesHashExist($id, $hash) {
+        $sql = "
+        SELECT id FROM observations 
+        WHERE
+            id = $id 
+            AND
+            hash = $hash;
+        ";
+
+        $result = $this->conn->query($sql);
+
+        if ($result) {
+            $rowCount = mysqli_num_rows($result);
+            if ($rowCount > 0) {
+                return TRUE;
+            }
+            else {
+                return NULL;
+            }
+        }
+        else {
+            $this->error = "Error finding hash: " . $this->conn->error;
             return FALSE;
         }
     }
@@ -106,8 +148,10 @@ class mysqlDb
         if ($this->conn->query($sql)) {
             // todo: log
             return TRUE;
-        } else {
-            return "Error updating record: " . $this->conn->error;
+        }
+        else {
+            $this->error = "Error updating record: " . $this->conn->error;
+            return FALSE;
         }
     }
 
@@ -117,9 +161,9 @@ class mysqlDb
         // todo: data security / prepared statements
         $sql = "
         INSERT INTO observations 
-        (id, hash, timestamp, status)
+            (id, hash, timestamp, status)
         VALUES
-        ($id, '$hash', $timestamp, $status);
+            ($id, '$hash', $timestamp, $status);
         ";
 
 //f        echo $sql;
@@ -127,8 +171,10 @@ class mysqlDb
         if ($this->conn->query($sql)) {
             // todo: log
             return TRUE;
-        } else {
-            return "Error inserting record: " . $this->conn->error;
+        }
+        else {
+            $this->error = "Error inserting record: " . $this->conn->error;
+            return FALSE;
         }
     }
 

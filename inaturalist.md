@@ -236,12 +236,12 @@ FRESH PUSH
   - Calculate hash
   - Convert to DW format
   - Push to DW
-  - Push to db (id, hash, timestamp), making an insert or update as needed
+  - Push to db (id, hash, timestamp), making an insert or update as needed [ready]
 
 DAILY UPDATE
 - Fetch obs updated since update timg read from db
 - Foreach obs as above
-- Save update time to db
+- Save update time to db [ready]
 
 MONTHLY UPDATE
 * This can be run monthly or as needed
@@ -250,22 +250,29 @@ MONTHLY UPDATE
   * Changed licenses
   * Changed quality_metrics
 
-- Fetch obs from API
+- Fetch all obs from API
 - Foreach obs
   - Calculate hash
-  - Check if hash found in db
-    - If found, do nothing, since DW is up to date
+  - Check if id-hash -pair found in db [ready]
+    - If found
+      - Push to db (status = 1), to mark that has been handled [ready]
     - If not found
       - Convert to DW format
       - Push to DW
-  - Push to db (status = 1), to mark that has been handled
+      - Push to db (status = 1), to mark that has been handled [ready]
 
 MONTHLY DELETION
-- Foreach in database
-- If status != 1
+- Get from database where status != 1. These are those that were nt handeld in monthly update because they were deleted from iNat [TODO]
+- Foreach
   - Delete from DW
-  - Delete from database (to prevent unneeded deletions later)
-- Set status = 0 for all (so that they will be checked for deletion next time)
+  - Delete from database (to prevent unneeded deletions later) [TODO] (Or set status = -1 and change all other methods accordingly)
+
+
+Database method return values
+- Failure: NULL, error on message variable
+- Success: something else, can be arr, string or FALSE
+
+Todo better: try/catch [TODO]
 
 
 How to handle problems during the process?
