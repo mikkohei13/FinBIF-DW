@@ -4,31 +4,48 @@ class mysqlDb
 {
     public $conn = FALSE;
 
-    public function connect() {
+    public function connect($database) {
         $server = "mysql";
-        $database = "test_db";
         $user = "root";
         $password = 'hartolanMarkkinat'; // Test password
 
         $this->conn = mysqli_connect($server, $user, $password, $database);
 
         if ($this->conn->connect_error) {
-            die("Connection failed: " . $this->conn->connect_error);
+            return "Database connection failed: " . $this->conn->connect_error;
+        }
+        else {
+            return TRUE;
         }
     }
 
-    public function insert() {
+    public function doesIDExist($id) {
         $sql = "
-        INSERT INTO test_table 
+        SELECT id FROM observations 
+        WHERE id = $id;
+        ";
+
+        echo $sql;
+
+        $result = $this->conn->query($sql);
+        echo "Rows: " . mysqli_num_rows($result);
+
+    }
+
+    public function insert($id, $hash, $timestamp) {
+        // todo: data security / prepared statements
+        $sql = "
+        INSERT INTO observations 
         (id, hash, timestamp)
         VALUES
-        (1, 'hash', 2);
+        ($id, $hash, $timestamp);
         ";
 
         if ($this->conn->query($sql)) {
-            echo "New record created successfully";
+            // todo: log
+            return TRUE;
         } else {
-            echo "Error: " . $this->conn->error;
+            return "Error inserting record: " . $this->conn->error;
         }
     }
 
