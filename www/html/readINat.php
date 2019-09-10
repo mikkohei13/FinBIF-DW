@@ -1,4 +1,6 @@
 <?php
+//require_once "readINatAssociatedData.php";
+
 echo "<pre>";
 
 // Finnish, CC, wild
@@ -9,7 +11,7 @@ $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2
 // Koivunpunikkitatti, testihavainto joss projekti ja tageja
 // Onko datamalli sama kuin observations-haussa?
 
-$url = "http://api.inaturalist.org/v1/observations/32469823";
+$url = "http://api.inaturalist.org/v1/observations/32469823?include_new_projects=true";
 
 
 $json = file_get_contents($url);
@@ -24,6 +26,7 @@ $meta['pagesToGo'] = $meta['pagesTotal'] - $meta['page'];
 
 print_r ($meta);
 
+// Foreach observation
 foreach ($data['results']  as $nro => $obs) {
   $dwObservations[] = observationInat2Dw($obs);
 }
@@ -34,20 +37,66 @@ $dwRoot['roots'] = $dwObservations;
 
 print_r ($dwRoot);
 
+//--------------------------------------------------------------------------
+
 function observationInat2Dw($inat) {
+
   $dw = Array();
+
+  // basic structure. todo: is this needed?
+  /*
+  $dw['publicDocument'] = Array();
+  $dw['publicDocument']['gatherings'][0] = Array();
+    */
+
+  // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
+  $dw['publicDocument']['collectionId'] = "http://tun.fi/HR.3211"; // todo: Esko: why collectionId twice?
   $dw['sourceId'] = "http://tun.fi/HR.3211";
   $dw['deleteRequest'] = FALSE;
   $dw['schema'] = "laji-etl";
-
-
-  // Obs
-  $dw['documentId'] = "http://tun.fi/HR.3211/" . $inat['id']; // todo: Esko: based on KE-identifier? 
   $dw['publicDocument']['secureLevel'] = "NONE";
+  $dw['publicDocument']['concealment'] = "PUBLIC";
 
-  // Keywords
-//  $dw['publicDocument']['keywords'] // todo: Esko: does this have to be id's?
+  $keywordsArr = Array();
+  $descArr = Array();
+
+  // Observation
+  $documentId = "http://tun.fi/HR.3211/" . $inat['id']; // todo: Esko: based on KE-identifier? 
+  $dw['documentId'] = $documentId;
+  $dw['publicDocument']['documentId'] = $documentId; // todo: Esko: why documentId twice?
+
+
+  // Projects
+  foreach($inat['non_traditional_projects'] as $projectNro => $project) {
+//    print_r($project); // debug
+    array_push($keywordsArr, "inaturalist-project-" . $project['project_id']);
+    array_push($descArr, $project['project']['title']);
+  }
+
+  // Dates
+  $dw['createdDate'] = $inat['created_at_details']['date'];
+
+  // Coordinates
+  $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "wgs84";
+
+  if (empty($inat['positional_accuracy'])) {
+    $accuracy = 1000; // Default for missing values
+  }
+  elseif ($inat['positional_accuracy'] < 10) {
+    $accuracy = 10; // Minimum value
+  }
+  else {
+    $accuracy = round($inat['positional_accuracy'], 0);
+  }
+  $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = $accuracy;
+  $dw['publicDocument']['gatherings'][0]['coordinates']['lon'] = $inat['geojson']['coordinates'][0]; // todo: Esko: is this correct for point coords?
+  $dw['publicDocument']['gatherings'][0]['coordinates']['lat'] = $inat['geojson']['coordinates'][1];
+
+
+  // Handle temporary arrays 
+  $dw['publicDocument']['keywords'] = $keywordsArr;
+  $dw['publicDocument']['description'] = implode(" / ", $descArr); // todo: name and level of this field?
 
   return $dw;
 }
