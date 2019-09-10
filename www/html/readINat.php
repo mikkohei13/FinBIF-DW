@@ -1,5 +1,7 @@
 <?php
-//require_once "readINatAssociatedData.php";
+require_once "inatHelpers.php";
+
+// todo: log errors locally, so that I know if some field is missing or something unexpected
 
 echo "<pre>";
 
@@ -57,9 +59,14 @@ function observationInat2Dw($inat) {
   $dw['schema'] = "laji-etl";
   $dw['publicDocument']['secureLevel'] = "NONE";
   $dw['publicDocument']['concealment'] = "PUBLIC";
+  $dw['publicDocument']['gatherings'][0]['units'][0]['superRecordBasis'] = "HUMAN_OBSERVATION_UNSPECIFIED";
+  $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "HUMAN_OBSERVATION_UNSPECIFIED";
+  $dw['publicDocument']['gatherings'][0]['units'][0]['typeSpecimen'] = false; // todo: esko: is this needed?
 
   $keywordsArr = Array();
   $descArr = Array();
+  $factsArr = Array();
+
 
   // Observation
   $documentId = "http://tun.fi/HR.3211/" . $inat['id']; // todo: Esko: based on KE-identifier? 
@@ -67,15 +74,32 @@ function observationInat2Dw($inat) {
   $dw['publicDocument']['documentId'] = $documentId; // todo: Esko: why documentId twice?
 
 
+  // Description
+  if (!empty($inat['description'])) { // Does this handle NULLs?
+    array_push($descArr, $inat['description']);
+  } 
+
+
+  // Keywords-id
+  array_push($keywordsArr, $inat['id']); // todo: Esko: is this the correct place?
+
+
   // Projects
   foreach($inat['non_traditional_projects'] as $projectNro => $project) {
 //    print_r($project); // debug
     array_push($keywordsArr, "inaturalist-project-" . $project['project_id']);
-    array_push($descArr, $project['project']['title']);
+    $factsArr = factsArrayPush($factsArr, "projectTitle", $project['project']['title']);
+
+//    array_push($descArr, "project: " . $project['project']['title']); // todo: is this needed?
   }
+
 
   // Dates
   $dw['createdDate'] = $inat['created_at_details']['date'];
+  $dw['eventDate']['begin'] = $inat['observed_on_details']['date'];
+
+  $factsArr = factsArrayPush($factsArr, "observationCreatedAt", $inat['time_observed_at']);
+
 
   // Coordinates
   $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "wgs84";
@@ -94,9 +118,74 @@ function observationInat2Dw($inat) {
   $dw['publicDocument']['gatherings'][0]['coordinates']['lat'] = $inat['geojson']['coordinates'][1];
 
 
+  // Locality
+  $locality = stringReverse($inat['place_guess']);
+
+  // Remove FI from the beginning
+  // todo: test that this really works
+  if (0 === strpos($locality, "FI,")) {
+    $locality = substr($locality, 3);
+  }
+  $locality = trim($locality, ", ");
+ 
+  $dw['publicDocument']['gatherings'][0]['locality'] = $locality;
+  $dw['publicDocument']['gatherings'][0]['country'] = "Finland"; // NOTE: This expects that only Finnish observations are fecthed
+
+
+  // Photos and other media
+  $dw['publicDocument']['gatherings'][0]['units'][0]['mediaCount'] = count($inat['observation_photos']); // todo: Esko: should media count be set, if media is on external server
+
+
+  // Taxon
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['species_guess']; // This can(?) be in any language?
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['taxon']['name']; // todo: esko: this is the real taxon, where to put this?
+
+
+  // Observations fields
+  foreach($inat['ofvs'] as $ofvsNro => $ofvs) {
+    $ofvsName = sanitizeOfvsName($ofvs['name_ci']);
+    $factsArr = factsArrayPush($factsArr, $ofvsName, $ofvs['value_ci']);
+  }
+
+
+  // Misc facts
+  // todo: are all of these needed / valuable?
+  $factsArr = factsArrayPush($factsArr, "out_of_range", $inat['out_of_range']);
+  $factsArr = factsArrayPush($factsArr, "quality_grade", $inat['quality_grade']);
+  $factsArr = factsArrayPush($factsArr, "quality_grade", $inat['quality_grade']);
+  $factsArr = factsArrayPush($factsArr, "taxon_geoprivacy", $inat['taxon_geoprivacy']);
+  $factsArr = factsArrayPush($factsArr, "context_geoprivacy", $inat['context_geoprivacy']);
+  $factsArr = factsArrayPush($factsArr, "context_user_geoprivacy", $inat['context_user_geoprivacy']);
+  $factsArr = factsArrayPush($factsArr, "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy']);
+  $factsArr = factsArrayPush($factsArr, "comments_count", $inat['comments_count']);
+  $factsArr = factsArrayPush($factsArr, "num_identification_agreements", $inat['num_identification_agreements']);
+//  $factsArr = factsArrayPush($factsArr, "identifications_most_agree", $inat['identifications_most_agree']);
+//  $factsArr = factsArrayPush($factsArr, "identifications_most_disagree", $inat['identifications_most_disagree']);
+  $factsArr = factsArrayPush($factsArr, "observerActivityCount", $inat['user']['activity_count']);
+
+
+
+  // FIELDS TODO TO DW or MISSING FROM EXAMPLE
+  $dw['license'] = $inat['license_code'];
+  $dw['url'] = $inat['uri'];
+
+  // Prefer full name over loginname
+  if ($inat['user']['name']) {
+    $observer = $inat['user']['name'];
+  }
+  else {
+    $observer = $inat['user']['login'];
+  }
+  $dw['observer'] = $observer;
+  $dw['observerId'] = $inat['user']['id'];
+  $dw['observerOrcid'] = $inat['user']['orcid'];
+
+
+
   // Handle temporary arrays 
-  $dw['publicDocument']['keywords'] = $keywordsArr;
-  $dw['publicDocument']['description'] = implode(" / ", $descArr); // todo: name and level of this field?
+  $dw['publicDocument']['keywords'] = $keywordsArr; // todo: or to unit level?
+  $dw['publicDocument']['gatherings'][0]['notes'] = implode(" / ", $descArr);
+  $dw['publicDocument']['gatherings'][0]['units'][0]['facts'] = $factsArr;
 
   return $dw;
 }
