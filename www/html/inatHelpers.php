@@ -7,10 +7,17 @@ function stringReverse($string) {
   return $reversedString;
 }
 
-function factsArrayPush($factsArr, $fact, $value) {
+function factsArrayPush($factsArr, $fact, $value, $preserveZero = FALSE) {
 
-  // Don't add empty facts, but consider 0 to be non-empty (can be used e.g. in observation fields)
-  if (empty($value) && 0 !== $value) {
+  echo $fact .":". $value; // debug
+
+  // Don't preserve non-set values
+  if (!isset($value)) {
+    return $factsArr;
+  }
+  // Don't preserve zero values, unless asked for
+  if (0 === $value && FALSE === $preserveZero)
+  {
     return $factsArr;
   }
   

@@ -70,11 +70,18 @@ function observationInat2Dw($inat) {
     */
   /*
   Todo:
-  - sounds
-  - quality metrics
-  - conflicting id's
-  - Is there field in DW for updated date?
-  - project_observations
+  - quality metrics, quality_grade, flags
+  - check conflicting id's
+  - Check that you are using taxon and taxon_guess fields correctlyy using placeholder/unknown/life observations
+  - https://www.inaturalist.org/pages/tips_tricks_nz
+  - Should we preserve zero values for some facts? Yes, for observation fields.
+
+  Ask Esko:
+  - Is there field in DW for
+    - date updated?
+    - outgoing links (obs in inat, obs in gbif, photos in inat, sounds in inat)
+  - What if a field is left empty? Is that ok, or should I avoid empty fields? (Note: the iNat JSON might have some elements missing, e.g. taxon is missing of there is not any identificationsor just a placeholder.)
+    
   */
 
   // Data shared by all observations
@@ -155,12 +162,15 @@ function observationInat2Dw($inat) {
   // Locality
   $locality = stringReverse($inat['place_guess']);
 
-  // Remove FI or Finland from the beginning
+  // Remove FI, Finland & Suomi from the beginning
   if (0 === strpos($locality, "FI,")) {
     $locality = substr($locality, 3);
   }
   elseif (0 === strpos($locality, "Finland,")) {
     $locality = substr($locality, 8);
+  }
+  elseif (0 === strpos($locality, "Suomi,")) {
+    $locality = substr($locality, 6);
   }
   $locality = trim($locality, ", ");
  
@@ -215,6 +225,10 @@ function observationInat2Dw($inat) {
     - Person C, D etc. can vote for or against the annotation
     - Person cannot create a new annotation about the same thing. He can (probably) remove person A's annotation and then create a new annotation. What then happens to the votes of B, C etc. ?
 
+    Annotations:
+    1=Life Stage, 9=Sex, 12=Plant Phenology
+    see more at https://forum.inaturalist.org/t/how-to-use-inaturalists-search-urls-wiki/63
+
     Because this is complicated, let's just save the original annotation as a fact for now. 
     Todo: Find out the logic and decide what to do. Prepare also to the possibility that allowed values may change over time. 
   */
@@ -225,13 +239,13 @@ function observationInat2Dw($inat) {
   }
 
   // Taxon
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['species_guess']; // This can(?) be in any language?
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['taxon']['name']; // todo: esko: this is the real taxon, where to put this?
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['species_guess']; // This can(?) be in any language, might depend on the third-person doing id annotation?
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxon'] = $inat['taxon']['name']; // todo: esko: this is the real taxon, where to put this?
 
 
   // Observations fields
   foreach($inat['ofvs'] as $ofvsNro => $ofvs) {
-    $factsArr = factsArrayPush($factsArr, $ofvs['name_ci'], $ofvs['value_ci']);
+    $factsArr = factsArrayPush($factsArr, $ofvs['name_ci'], $ofvs['value_ci'], TRUE); // This must preserve zero values
   }
 
   // Quality grade
@@ -240,14 +254,14 @@ function observationInat2Dw($inat) {
 
   // Misc facts
   // todo: are all of these needed / valuable?
-  $factsArr = factsArrayPush($factsArr, "out_of_range", $inat['out_of_range']);
-  $factsArr = factsArrayPush($factsArr, "taxon_geoprivacy", $inat['taxon_geoprivacy']);
-  $factsArr = factsArrayPush($factsArr, "context_geoprivacy", $inat['context_geoprivacy']);
-  $factsArr = factsArrayPush($factsArr, "context_user_geoprivacy", $inat['context_user_geoprivacy']);
-  $factsArr = factsArrayPush($factsArr, "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy']);
-  $factsArr = factsArrayPush($factsArr, "comments_count", $inat['comments_count']);
-  $factsArr = factsArrayPush($factsArr, "num_identification_agreements", $inat['num_identification_agreements']);
-  $factsArr = factsArrayPush($factsArr, "num_identification_disagreements", $inat['num_identification_disagreements']);
+  $factsArr = factsArrayPush($factsArr, "out_of_range", $inat['out_of_range'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "taxon_geoprivacy", $inat['taxon_geoprivacy'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "context_geoprivacy", $inat['context_geoprivacy'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "context_user_geoprivacy", $inat['context_user_geoprivacy'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "comments_count", $inat['comments_count'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "num_identification_agreements", $inat['num_identification_agreements'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "num_identification_disagreements", $inat['num_identification_disagreements'], TRUE);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_agree", $inat['identifications_most_agree']);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_disagree", $inat['identifications_most_disagree']);
   $factsArr = factsArrayPush($factsArr, "observerActivityCount", $inat['user']['activity_count']);
