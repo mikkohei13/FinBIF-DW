@@ -13,18 +13,15 @@ function factsArrayPush($factsArr, $fact, $value) {
   if (empty($value) && 0 !== $value) {
     return $factsArr;
   }
+  
   $newArr = Array();
-  $newArr['fact'] = $fact;
+  $newArr['fact'] = preg_replace('/[^\w]/', '', $fact); // Remove spaces, special chars etc. from fact names. Does this handle all cases? Seems to allow _ but not ÅÄÖåäö-".,;:
   $newArr['value'] = $value;
 
   $factsArr[] = $newArr;
   return $factsArr;
 }
 
-function sanitizeOfvsName($name) {
-  // Remove all except letters and numbers
-  return preg_replace('/[^\w]/', '', $name);
-}
 
 /*
 $projectKeywords = inatProjects2keywords($inat['non_traditional_projects']);

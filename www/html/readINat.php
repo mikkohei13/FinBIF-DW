@@ -5,16 +5,34 @@ require_once "inatHelpers.php";
 
 echo "<pre>";
 
-// Finnish, CC, wild
-// 10 per page, page 1
+if (isset($_GET['obs_id'])) {
+  $url = "http://api.inaturalist.org/v1/observations/" . $_GET['obs_id'] . "?include_new_projects=true";
+}
+else {
+  // Finnish, CC, wild
+  // 10 per page, page 1
 
-$url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=10&order=desc&order_by=created_at";
+  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=10&order=desc&order_by=created_at";
 
-// Koivunpunikkitatti, testihavainto joss projekti ja tageja
-// Onko datamalli sama kuin observations-haussa?
+  // Koivunpunikkitatti, testihavainto joss projekti ja tageja
+  // Onko datamalli sama kuin observations-haussa?
 
-$url = "http://api.inaturalist.org/v1/observations/32469823?include_new_projects=true";
+  $url = "http://api.inaturalist.org/v1/observations/32469823?include_new_projects=true";
 
+  // Silokka, 2 kuvaa
+
+  $url = "http://api.inaturalist.org/v1/observations/32325167?include_new_projects=true";
+
+  // Danaus chrysippus, 5 id's, charset issue in tags field
+  // project_observations, annotations
+
+  $url = "http://api.inaturalist.org/v1/observations/20830621?include_new_projects=true";
+
+}
+
+
+
+// ------------------------------------------------------------------------------------------------
 
 $json = file_get_contents($url);
 //echo $json;
@@ -50,6 +68,14 @@ function observationInat2Dw($inat) {
   $dw['publicDocument'] = Array();
   $dw['publicDocument']['gatherings'][0] = Array();
     */
+  /*
+  Todo:
+  - sounds
+  - quality metrics
+  - conflicting id's
+  - Is there field in DW for updated date?
+  - project_observations
+  */
 
   // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
@@ -59,7 +85,6 @@ function observationInat2Dw($inat) {
   $dw['schema'] = "laji-etl";
   $dw['publicDocument']['secureLevel'] = "NONE";
   $dw['publicDocument']['concealment'] = "PUBLIC";
-  $dw['publicDocument']['gatherings'][0]['units'][0]['superRecordBasis'] = "HUMAN_OBSERVATION_UNSPECIFIED";
   $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "HUMAN_OBSERVATION_UNSPECIFIED";
   $dw['publicDocument']['gatherings'][0]['units'][0]['typeSpecimen'] = false; // todo: esko: is this needed?
 
@@ -85,12 +110,21 @@ function observationInat2Dw($inat) {
 
 
   // Projects
+  // todo: do we need to store whether the project is trad/non-trad? Do they share identifier namespace?
+  // Non-traditional (automatic)
   foreach($inat['non_traditional_projects'] as $projectNro => $project) {
-//    print_r($project); // debug
-    array_push($keywordsArr, "inaturalist-project-" . $project['project_id']);
+    //    print_r($project); // debug
+    array_push($keywordsArr, "project-" . $project['project_id']);
     $factsArr = factsArrayPush($factsArr, "projectTitle", $project['project']['title']);
+    $factsArr = factsArrayPush($factsArr, "projectId", $project['project_id']);
+  }
 
-//    array_push($descArr, "project: " . $project['project']['title']); // todo: is this needed?
+  // Traditional (manual)
+  foreach($inat['project_observations'] as $projectNro => $project) {
+    //    print_r($tradProject); // debug
+    array_push($keywordsArr, "project-" . $project['project_id']);
+    $factsArr = factsArrayPush($factsArr, "projectTitle", $project['project']['title']);   
+    $factsArr = factsArrayPush($factsArr, "projectId", $project['project_id']);
   }
 
 
@@ -98,7 +132,7 @@ function observationInat2Dw($inat) {
   $dw['createdDate'] = $inat['created_at_details']['date'];
   $dw['eventDate']['begin'] = $inat['observed_on_details']['date'];
 
-  $factsArr = factsArrayPush($factsArr, "observationCreatedAt", $inat['time_observed_at']);
+  $factsArr = factsArrayPush($factsArr, "observedOrCreatedAt", $inat['time_observed_at']);
 
 
   // Coordinates
@@ -121,10 +155,12 @@ function observationInat2Dw($inat) {
   // Locality
   $locality = stringReverse($inat['place_guess']);
 
-  // Remove FI from the beginning
-  // todo: test that this really works
+  // Remove FI or Finland from the beginning
   if (0 === strpos($locality, "FI,")) {
     $locality = substr($locality, 3);
+  }
+  elseif (0 === strpos($locality, "Finland,")) {
+    $locality = substr($locality, 8);
   }
   $locality = trim($locality, ", ");
  
@@ -132,9 +168,46 @@ function observationInat2Dw($inat) {
   $dw['publicDocument']['gatherings'][0]['country'] = "Finland"; // NOTE: This expects that only Finnish observations are fecthed
 
 
-  // Photos and other media
-  $dw['publicDocument']['gatherings'][0]['units'][0]['mediaCount'] = count($inat['observation_photos']); // todo: Esko: should media count be set, if media is on external server
+  // Photos
+  $photoCount = count($inat['observation_photos']); // todo: does this fail
+  if ($photoCount >= 1) {
+    array_push($keywordsArr, "has_photos");
+    foreach ($inat['observation_photos'] as $photoNro => $photo) {
+      $factsArr = factsArrayPush($factsArr, "photoId", $photo['photo']['id']);
+    }
+  }
+  else {
+    array_push($keywordsArr, "no_photos");
+  }
+  $factsArr = factsArrayPush($factsArr, "photoCount", $photoCount);
 
+
+  // Tags
+  if (!empty($inat['tags'])) {
+    foreach ($inat['tags'] as $tagNro => $tag) {
+      array_push($keywordsArr, $tag);
+    }
+  }
+
+
+  // Annotations
+  /*
+  Annotations describe two features: Life stage and Sex.
+  The logic seems to be a bit difficult, if I uncderstand it correctly:
+    - Person B creates an observation
+    - Person A creates an annotation, e.g. saying Life stage is Adult
+    - Person B can vote for or against the annotation
+    - Person C, D etc. can vote for or against the annotation
+    - Person cannot create a new annotation about the same thing. He can (probably) remove person A's annotation and then create a new annotation. What then happens to the votes of B, C etc. ?
+
+    Because this is complicated, let's just save the original annotation as a fact for now. 
+    Todo: Find out the logic and decide what to do. Prepare also to the possibility that allowed values may change over time. 
+  */
+  if (!empty($inat['annotations'])) {
+    foreach ($inat['annotations'] as $annotationNro => $annotation) {
+      $factsArr = factsArrayPush($factsArr, $annotation['controlled_attribute']['label'], $annotation['controlled_value']['label']);
+    }
+  }
 
   // Taxon
   $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['species_guess']; // This can(?) be in any language?
@@ -143,32 +216,35 @@ function observationInat2Dw($inat) {
 
   // Observations fields
   foreach($inat['ofvs'] as $ofvsNro => $ofvs) {
-    $ofvsName = sanitizeOfvsName($ofvs['name_ci']);
-    $factsArr = factsArrayPush($factsArr, $ofvsName, $ofvs['value_ci']);
+    $factsArr = factsArrayPush($factsArr, $ofvs['name_ci'], $ofvs['value_ci']);
   }
 
+  // Quality grade
+  $factsArr = factsArrayPush($factsArr, "quality_grade", $inat['quality_grade']);
+  array_push($keywordsArr, $inat['quality_grade']);
 
   // Misc facts
   // todo: are all of these needed / valuable?
   $factsArr = factsArrayPush($factsArr, "out_of_range", $inat['out_of_range']);
-  $factsArr = factsArrayPush($factsArr, "quality_grade", $inat['quality_grade']);
-  $factsArr = factsArrayPush($factsArr, "quality_grade", $inat['quality_grade']);
   $factsArr = factsArrayPush($factsArr, "taxon_geoprivacy", $inat['taxon_geoprivacy']);
   $factsArr = factsArrayPush($factsArr, "context_geoprivacy", $inat['context_geoprivacy']);
   $factsArr = factsArrayPush($factsArr, "context_user_geoprivacy", $inat['context_user_geoprivacy']);
   $factsArr = factsArrayPush($factsArr, "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy']);
   $factsArr = factsArrayPush($factsArr, "comments_count", $inat['comments_count']);
   $factsArr = factsArrayPush($factsArr, "num_identification_agreements", $inat['num_identification_agreements']);
+  $factsArr = factsArrayPush($factsArr, "num_identification_disagreements", $inat['num_identification_disagreements']);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_agree", $inat['identifications_most_agree']);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_disagree", $inat['identifications_most_disagree']);
   $factsArr = factsArrayPush($factsArr, "observerActivityCount", $inat['user']['activity_count']);
+  $factsArr = factsArrayPush($factsArr, "owners_identification_from_vision", $inat['owners_identification_from_vision']);
+//  $factsArr = factsArrayPush($factsArr, "", $inat(['']);
 
 
+  // ----------------------------------------------------------------------------------------
 
   // FIELDS TODO TO DW or MISSING FROM EXAMPLE
-  $dw['license'] = $inat['license_code'];
-  $dw['url'] = $inat['uri'];
 
+  // Observer
   // Prefer full name over loginname
   if ($inat['user']['name']) {
     $observer = $inat['user']['name'];
@@ -177,10 +253,17 @@ function observationInat2Dw($inat) {
     $observer = $inat['user']['login'];
   }
   $dw['observer'] = $observer;
-  $dw['observerId'] = $inat['user']['id'];
-  $dw['observerOrcid'] = $inat['user']['orcid'];
+  $dw['observerId'] = "inaturalist:" . $inat['user']['id'];
+  if (!empty($inat['user']['orcid'])) {
+    $dw['observerOrcid'] = $inat['user']['orcid'];
+  }
 
 
+  $dw['license'] = $inat['license_code'];
+  $dw['url'] = $inat['uri'];
+
+
+  // ----------------------------------------------------------------------------------------
 
   // Handle temporary arrays 
   $dw['publicDocument']['keywords'] = $keywordsArr; // todo: or to unit level?

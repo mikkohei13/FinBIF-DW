@@ -160,6 +160,9 @@ https://www.inaturalist.org/observations/31904203
 
 C. 5 min cache
 
+??
+- Keywords - can iNat user do these? Description hashtags?
+- Observation fields -> facts?
 
 iNat APi field  DW field  notes
 out_of_range    true|false|empty
