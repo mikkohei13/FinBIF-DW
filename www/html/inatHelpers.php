@@ -35,6 +35,25 @@ function factsArrayPush($factsArr, $fact, $value, $preserveZeroAndFalse = FALSE)
   return $factsArr;
 }
 
+function summarizeQualityMetrics($qmArray) {
+  $ret = Array();
+
+  foreach ($qmArray as $nro => $qm) {
+    if (TRUE === $qm['agree']) {
+      $value = 1;
+    }
+    elseif (FALSE === $qm['agree']) {
+      $value = -1;
+    }
+    else {
+      $value = 0;
+    }
+    @$ret[$qm['metric']] = $ret[$qm['metric']] + $value; // Note: @ suppressess errors
+  }
+
+  return $ret;
+
+}
 
 /*
 $projectKeywords = inatProjects2keywords($inat['non_traditional_projects']);

@@ -28,6 +28,9 @@ else {
 
   $url = "http://api.inaturalist.org/v1/observations/20830621?include_new_projects=true";
 
+  // Spam
+  $url = "http://api.inaturalist.org/v1/observations/32589022?include_new_projects=true";
+
 }
 
 
@@ -68,6 +71,7 @@ function observationInat2Dw($inat) {
   - keep observerActivityCount? It will constantly change.
   
   Todo:
+  - TURN SPAM FILTERING BACK ON
   - Filter mikkohei13 observations (will be duplicates, but have images...)
   - quality metrics
   - quality_grade
@@ -89,11 +93,13 @@ function observationInat2Dw($inat) {
   */
 
   // Spam etc. filtering
+  /*
   if (!empty($inat['flags'])) {
     // todo: log id and reason
 //    log2("NOTICE", "skipped observation having flag(s)\t" . $inat['id']);
     return FALSE;
   }
+  */
 
   // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
@@ -126,8 +132,15 @@ function observationInat2Dw($inat) {
     array_push($descArr, $inat['description']);
   } 
 
-
-
+  // Quality metrics
+  //todo: esko: where to put these?
+  if ($inat['quality_metrics']) {
+    $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
+    print_r ($qualityMetrics);
+    foreach ($qualityMetrics as $key => $value) {
+      $factsArr = factsArrayPush($factsArr, "quality_metrics_" . $key, $value, TRUE);
+    }
+  }
 
   // Projects
   // todo: do we need to store whether the project is trad/non-trad? Do they share identifier namespace?
