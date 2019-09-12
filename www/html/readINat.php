@@ -63,26 +63,37 @@ function observationInat2Dw($inat) {
 
   $dw = Array();
 
-  // basic structure. todo: is this needed?
   /*
-  $dw['publicDocument'] = Array();
-  $dw['publicDocument']['gatherings'][0] = Array();
-    */
-  /*
+  Decide:
+  - keep observerActivityCount? It will constantly change.
+  
   Todo:
-  - quality metrics, quality_grade, flags
+  - Filter mikkohei13 observations (will be duplicates, but have images...)
+  - quality metrics
+  - quality_grade
   - check conflicting id's
   - Check that you are using taxon and taxon_guess fields correctlyy using placeholder/unknown/life observations
   - https://www.inaturalist.org/pages/tips_tricks_nz
-  - Should we preserve zero values for some facts? Yes, for observation fields.
 
   Ask Esko:
+  - Millainen document id pitää luoda? Mihin laitetaan alkuperäislähteen id? Tallennetaanko GBIF:n käyttämä id jonnekin, siltä varalta että dataa yhdistetään jossain vaiheessa? GBIF käyttää iNat urlia tunnisteena, nyt tämä faktassa.
   - Is there field in DW for
     - date updated?
     - outgoing links (obs in inat, obs in gbif, photos in inat, sounds in inat)
   - What if a field is left empty? Is that ok, or should I avoid empty fields? (Note: the iNat JSON might have some elements missing, e.g. taxon is missing of there is not any identificationsor just a placeholder.)
     
+
+  How to have FinBIF here (not important, mostly curious...):
+  This observation is featured on 1 site
+
   */
+
+  // Spam etc. filtering
+  if (!empty($inat['flags'])) {
+    // todo: log id and reason
+//    log2("NOTICE", "skipped observation having flag(s)\t" . $inat['id']);
+    return FALSE;
+  }
 
   // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
@@ -100,10 +111,14 @@ function observationInat2Dw($inat) {
   $factsArr = Array();
 
 
-  // Observation
+  // Id's
   $documentId = "http://tun.fi/HR.3211/" . $inat['id']; // todo: Esko: based on KE-identifier? 
   $dw['documentId'] = $documentId;
   $dw['publicDocument']['documentId'] = $documentId; // todo: Esko: why documentId twice?
+
+  $factsArr = factsArrayPush($factsArr, "inaturalistId", $inat['id'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "inaturalistUri", "https://www.inaturalist.org/observations/" . $inat['id'], TRUE);
+  array_push($keywordsArr, $inat['id']); // todo: Esko: is this the correct place?
 
 
   // Description
@@ -112,8 +127,6 @@ function observationInat2Dw($inat) {
   } 
 
 
-  // Keywords-id
-  array_push($keywordsArr, $inat['id']); // todo: Esko: is this the correct place?
 
 
   // Projects
@@ -142,7 +155,7 @@ function observationInat2Dw($inat) {
   $factsArr = factsArrayPush($factsArr, "observedOrCreatedAt", $inat['time_observed_at']);
 
 
-  // Coordinates
+  // Coordinate accuracy
   $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "wgs84";
 
   if (empty($inat['positional_accuracy'])) {
@@ -155,6 +168,8 @@ function observationInat2Dw($inat) {
     $accuracy = round($inat['positional_accuracy'], 0);
   }
   $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = $accuracy;
+
+  // Coordinates
   $dw['publicDocument']['gatherings'][0]['coordinates']['lon'] = $inat['geojson']['coordinates'][0]; // todo: Esko: is this correct for point coords?
   $dw['publicDocument']['gatherings'][0]['coordinates']['lat'] = $inat['geojson']['coordinates'][1];
 
@@ -239,7 +254,7 @@ function observationInat2Dw($inat) {
   }
 
   // Taxon
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['species_guess']; // This can(?) be in any language, might depend on the third-person doing id annotation?
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['species_guess']; // todo: keep this? This can(?) be in any language, unclear what is based on - seems often be dependent on the language of the latest identifier.
   $dw['publicDocument']['gatherings'][0]['units'][0]['taxon'] = $inat['taxon']['name']; // todo: esko: this is the real taxon, where to put this?
 
 
@@ -254,18 +269,18 @@ function observationInat2Dw($inat) {
 
   // Misc facts
   // todo: are all of these needed / valuable?
-  $factsArr = factsArrayPush($factsArr, "out_of_range", $inat['out_of_range'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "taxon_geoprivacy", $inat['taxon_geoprivacy'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "context_geoprivacy", $inat['context_geoprivacy'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "context_user_geoprivacy", $inat['context_user_geoprivacy'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "comments_count", $inat['comments_count'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "num_identification_agreements", $inat['num_identification_agreements'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "num_identification_disagreements", $inat['num_identification_disagreements'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "out_of_range", $inat['out_of_range'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "comments_count", $inat['comments_count'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "num_identification_agreements", $inat['num_identification_agreements'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_agree", $inat['identifications_most_agree']);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_disagree", $inat['identifications_most_disagree']);
   $factsArr = factsArrayPush($factsArr, "observerActivityCount", $inat['user']['activity_count']);
-  $factsArr = factsArrayPush($factsArr, "owners_identification_from_vision", $inat['owners_identification_from_vision']);
+  $factsArr = factsArrayPush($factsArr, "owners_identification_from_vision", $inat['owners_identification_from_vision'], FALSE);
 //  $factsArr = factsArrayPush($factsArr, "", $inat(['']);
 
 
