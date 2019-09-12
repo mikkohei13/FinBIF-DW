@@ -1,5 +1,6 @@
 <?php
 require_once "inatHelpers.php";
+require_once "log2.php";
 
 // todo: log errors locally, so that I know if some field is missing or something unexpected
 
@@ -30,6 +31,9 @@ else {
 
   // Spam
   $url = "http://api.inaturalist.org/v1/observations/32589022?include_new_projects=true";
+
+  // Maveric Anser
+  $url = "http://api.inaturalist.org/v1/observations/17937851?include_new_projects=true";
 
 }
 
@@ -67,11 +71,16 @@ function observationInat2Dw($inat) {
   $dw = Array();
 
   /*
+  
+  This expects that certain obserations are filtered out in the API call:
+  - Non-Finnish. If this is exapanded to other countries, remove hard-coded country name. Also note that country name may be in any language or abbreviation (Finland, FI, Suomi...).
+  - Observations without license
+  - Captive/cultivated 
+
   Decide:
   - keep observerActivityCount? It will constantly change.
   
   Todo:
-  - TURN SPAM FILTERING BACK ON
   - Filter mikkohei13 observations (will be duplicates, but have images...)
   - quality metrics
   - quality_grade
@@ -92,14 +101,15 @@ function observationInat2Dw($inat) {
 
   */
 
-  // Spam etc. filtering
-  /*
+  // Flags/spam etc. filtering
   if (!empty($inat['flags'])) {
-    // todo: log id and reason
-//    log2("NOTICE", "skipped observation having flag(s)\t" . $inat['id']);
+    log2("NOTICE", "skipped observation having flag(s)\t" . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
-  */
+  if ("Homo sapiens" == $inat['taxon']['name']) {
+    log2("NOTICE", "skipped observation of human(s)\t" . $inat['id'], "log/inat-obs-log.log");
+    return FALSE;
+  }
 
   // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
@@ -327,5 +337,7 @@ function observationInat2Dw($inat) {
   $dw['publicDocument']['gatherings'][0]['notes'] = implode(" / ", $descArr);
   $dw['publicDocument']['gatherings'][0]['units'][0]['facts'] = $factsArr;
 
+
+  log2("SUCCESS", "handled observation\t" . $inat['id'], "log/inat-obs-log.log");
   return $dw;
 }
