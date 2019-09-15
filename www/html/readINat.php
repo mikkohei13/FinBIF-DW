@@ -51,7 +51,7 @@ $meta['perPage'] = $data['per_page'];
 $meta['pagesTotal'] = ceil($meta['totalResults'] / $meta['perPage']);
 $meta['pagesToGo'] = $meta['pagesTotal'] - $meta['page'];
 
-print_r ($meta);
+//print_r ($meta);
 
 // Foreach observation
 foreach ($data['results']  as $nro => $obs) {
@@ -63,6 +63,7 @@ $dwRoot['schema'] = "laji-etl";
 $dwRoot['roots'] = $dwObservations;
 
 print_r ($dwRoot);
+print_r (json_encode($dwRoot));
 
 //--------------------------------------------------------------------------
 
@@ -76,11 +77,14 @@ function observationInat2Dw($inat) {
   - Non-Finnish. If this is exapanded to other countries, remove hard-coded country name. Also note that country name may be in any language or abbreviation (Finland, FI, Suomi...).
   - Observations without license
   - Captive/cultivated 
+  - without_taxon_id: [human id] (todo: remove human filter here)
 
   Decide:
   - keep observerActivityCount? It will constantly change.
   
   Todo:
+  - Check that empty fields are ok when data is json
+  - Whatr does id please flag look like?
   - Filter mikkohei13 observations (will be duplicates, but have images...)
   - quality metrics
   - quality_grade
@@ -173,7 +177,7 @@ function observationInat2Dw($inat) {
 
   // Dates
   $dw['createdDate'] = $inat['created_at_details']['date'];
-  $dw['eventDate']['begin'] = $inat['observed_on_details']['date'];
+  $dw['eventDate']['begin'] = removeNullFalse($inat['observed_on_details']['date']);
 
   $factsArr = factsArrayPush($factsArr, "observedOrCreatedAt", $inat['time_observed_at']);
 
@@ -193,8 +197,8 @@ function observationInat2Dw($inat) {
   $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = $accuracy;
 
   // Coordinates
-  $dw['publicDocument']['gatherings'][0]['coordinates']['lon'] = $inat['geojson']['coordinates'][0]; // todo: Esko: is this correct for point coords?
-  $dw['publicDocument']['gatherings'][0]['coordinates']['lat'] = $inat['geojson']['coordinates'][1];
+  $dw['publicDocument']['gatherings'][0]['coordinates']['lon'] = removeNullFalse($inat['geojson']['coordinates'][0]); // todo: Esko: is this correct for point coords?
+  $dw['publicDocument']['gatherings'][0]['coordinates']['lat'] = removeNullFalse($inat['geojson']['coordinates'][1]);
 
 
   // Locality
@@ -277,8 +281,8 @@ function observationInat2Dw($inat) {
   }
 
   // Taxon
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = $inat['species_guess']; // todo: keep this? This can(?) be in any language, unclear what is based on - seems often be dependent on the language of the latest identifier.
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxon'] = $inat['taxon']['name']; // todo: esko: this is the real taxon, where to put this?
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = removeNullFalse($inat['species_guess']); // todo: keep this? This can(?) be in any language, unclear what is based on - seems often be dependent on the language of the latest identifier.
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxon'] = removeNullFalse($inat['taxon']['name']); // todo: esko: this is the real taxon, where to put this?
 
 
   // Observations fields

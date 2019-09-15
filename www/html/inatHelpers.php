@@ -55,6 +55,15 @@ function summarizeQualityMetrics($qmArray) {
 
 }
 
+function removeNullFalse($var) {
+  if (FALSE === $var || NULL === $var) {
+    return "";
+  }
+  else {
+    return $var;
+  }
+}
+
 /*
 $projectKeywords = inatProjects2keywords($inat['non_traditional_projects']);
 
