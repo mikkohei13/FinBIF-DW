@@ -9,7 +9,7 @@ function stringReverse($string) {
 
 function factsArrayPush($factsArr, $fact, $value, $preserveZeroAndFalse = FALSE) {
 
-  echo $fact .":". $value; // debug
+//  echo $fact .":". $value; // debug
 
   // Don't preserve non-set values
   if (!isset($value)) {

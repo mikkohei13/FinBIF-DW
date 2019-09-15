@@ -42,36 +42,52 @@ else {
 
 $dwObservations = Array();
 
-$perPage = 10;
-$pagesLimit = 5;
-$sleepSecondsBetweenPages = 5; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
 
-$page = 1; // Start value
+// DEBUG
+if (isset($_GET['debug'])) {
+//  $url = "http://api.inaturalist.org/v1/observations/" . $_GET['debug'] . "?include_new_projects=true"; // single
+  $url = "https://api.inaturalist.org/v1/observations?id=" . $_GET['debug'] . "&order=desc&order_by=created_at&include_new_projects=true"; // multi
 
-// Per page
-while ($page <= $pagesLimit) {
-  $observationsJson = getObservationsJson($page, $perPage);
+  $observationsJson = file_get_contents($url);
+  log2("DEBUG", "fetched id ".$_GET['debug'], "log/inat-obs-log.log");
+
   $data = json_decode($observationsJson, TRUE);
-
-  /*
-  $meta['totalResults'] = $data['total_results']; 
-  $meta['page'] = $data['page'];
-  $meta['perPage'] = $data['per_page'];
-  $meta['pagesTotal'] = ceil($meta['totalResults'] / $meta['perPage']);
-  $meta['pagesToGo'] = $meta['pagesTotal'] - $meta['page'];
+  $dwObservations[] = observationInat2Dw($data['results'][0]);
+}
+// PRODUCTION
+else {
+  $perPage = 60;
+  $pagesLimit = 1;
+  $sleepSecondsBetweenPages = 1; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
   
-  //print_r ($meta);
-  */
-
-  // Per observation
-  foreach ($data['results']  as $nro => $obs) {
-    $dwObservations[] = observationInat2Dw($obs);
-  }
-
-  $page++;
-  sleep($sleepSecondsBetweenPages);
+  $page = 1; // Start value
+  
+  // Per page
+  while ($page <= $pagesLimit) {
+    $observationsJson = getObservationsJson($page, $perPage);
+    $data = json_decode($observationsJson, TRUE);
+  
+    /*
+    $meta['totalResults'] = $data['total_results']; 
+    $meta['page'] = $data['page'];
+    $meta['perPage'] = $data['per_page'];
+    $meta['pagesTotal'] = ceil($meta['totalResults'] / $meta['perPage']);
+    $meta['pagesToGo'] = $meta['pagesTotal'] - $meta['page'];
+    
+    //print_r ($meta);
+    */
+  
+    // Per observation
+    foreach ($data['results']  as $nro => $obs) {
+      $dwObservations[] = observationInat2Dw($obs);
+    }
+  
+    $page++;
+    sleep($sleepSecondsBetweenPages);
+  }  
 }
 
+// Compile json file to be sent
 $dwRoot = Array();
 $dwRoot['schema'] = "laji-etl";
 $dwRoot['roots'] = $dwObservations;
@@ -82,10 +98,12 @@ print_r (json_encode($dwRoot));
 log2("NOTICE", "finished", "log/inat-obs-log.log");
 
 
+
 //--------------------------------------------------------------------------
 
 
 function getObservationsJson($page, $perPage) {
+
   $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=" . $page . "&per_page=" . $perPage . "&order=desc&order_by=created_at";
 
   $observationsJson = file_get_contents($url);

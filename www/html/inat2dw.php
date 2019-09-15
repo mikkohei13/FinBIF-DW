@@ -19,6 +19,15 @@ function observationInat2Dw($inat) {
   - keep observerActivityCount? It will constantly change.
   
   Todo:
+  - It seems that list quesy has different formats for annotations & projects (at least): they don't have the labels
+    Examples:
+    - annotations: 32818382
+    - project_observations: 20561213
+    - non_traditional_projects: ??
+    Options:
+      a) fetch projects, annotations from api
+      b) hard-code annotations
+      c) leave labels out for now, just use keywords for project id's and facts for other info
   - Check that empty fields are ok when data is json
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
   - Filter mikkohei13 observations (will be duplicates, but have images...)
@@ -47,6 +56,8 @@ function observationInat2Dw($inat) {
     log2("NOTICE", "skipped observation of human(s)\t" . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
+
+//  echo "HERE GOES obs ".$inat['id'].":\n"; print_r ($inat); // debug ABBA
 
   // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
@@ -107,7 +118,7 @@ function observationInat2Dw($inat) {
   // Traditional (manual)
   if (isset($inat['project_observations'])) {
     foreach($inat['project_observations'] as $projectNro => $project) {
-      //    print_r($tradProject); // debug
+//         echo "\nPROJECT NRO ".$projectNro.":\n"; print_r($project); // debug
       array_push($keywordsArr, "project-" . $project['project_id']);
       $factsArr = factsArrayPush($factsArr, "projectTitle", $project['project']['title']);   
       $factsArr = factsArrayPush($factsArr, "projectId", $project['project_id']);
@@ -198,7 +209,7 @@ function observationInat2Dw($inat) {
 
   // Annotations
   /*
-  Annotations describe two features: Life stage and Sex.
+  Annotations describe three features: Life stage, plant phenology and Sex.
   The logic seems to be a bit difficult, if I uncderstand it correctly:
     - Person B creates an observation
     - Person A creates an annotation, e.g. saying Life stage is Adult
@@ -282,5 +293,6 @@ function observationInat2Dw($inat) {
 
 
   log2("SUCCESS", "handled observation\t" . $inat['id'], "log/inat-obs-log.log");
+  echo "handled ".$inat['id']."\n"; // debug
   return $dw;
 }
