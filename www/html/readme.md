@@ -286,5 +286,24 @@ MONTHLY DELETION
 - If fails, stop the process
 - Restart manually, from the beginning
 
+## Feedback about iNat API
+
+Or is this information available somewhere?
+
+Describe meaning and possible values of the different fields. Things like:
+
+- What are the meaning of different fields? (e.g. species_guess is the verbatim taxon (and not always a species), taxon->name is the interpreted/community id)
+- How fields are usually used? (e.g. quality metrics are usually used to mark observations as suspicious, but not as confirmed)
+- What languages fields can contain? (e.g. species_quess seems to contain text in many different languages, description can contain anything the user writes)
+- Which fields can contain HTML tags? (e.g. description)
+- Which fields can be empty or null, and when?
+- Which fields are deprecated and/or cannot be used anymore (id_please seems to be always false, is this feature removed?)
+- Which kind of special cases should be prepared for? (e.g. what if observer uses a placeholder name, external name provider, or leaves the taxon unidentified?)
+
+
+Also examples of some complicated observations would be helpful, e.g. with multiple photos and sound files, conflicting identifications, observation fields, quality metrics, tags, annotations, flags, traditional projects, non-traditional projects, faves etc...
+
+
+
 
 

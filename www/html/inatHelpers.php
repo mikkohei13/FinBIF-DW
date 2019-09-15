@@ -64,6 +64,19 @@ function removeNullFalse($var) {
   }
 }
 
+// Handle special taxa
+function handleTaxon($taxon) {
+  if ("Life" === $taxon) {
+    return "Biota";
+  }
+  elseif ("unknown" === $taxon) { // This should not be possible, but just in case handle it here...
+    return "";
+  }
+  else {
+    return removeNullFalse($taxon);
+  }
+}
+
 /*
 $projectKeywords = inatProjects2keywords($inat['non_traditional_projects']);
 

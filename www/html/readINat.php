@@ -84,22 +84,19 @@ function observationInat2Dw($inat) {
   
   Todo:
   - Check that empty fields are ok when data is json
-  - Whatr does id please flag look like?
+  - Quality metrics & quality grade (casual, research) affecting quality fields in DW
   - Filter mikkohei13 observations (will be duplicates, but have images...)
-  - quality metrics
-  - quality_grade
-  - check conflicting id's
-  - Check that you are using taxon and taxon_guess fields correctlyy using placeholder/unknown/life observations
-  - https://www.inaturalist.org/pages/tips_tricks_nz
 
   Ask Esko:
+  - Mitä jos vain taxon verbatim saatavilla? Käytetäänkö taksonina, jätetäänkö taksoni tyhjäksi, vai laitetaanko taksoniksi "biota"?
   - Millainen document id pitää luoda? Mihin laitetaan alkuperäislähteen id? Tallennetaanko GBIF:n käyttämä id jonnekin, siltä varalta että dataa yhdistetään jossain vaiheessa? GBIF käyttää iNat urlia tunnisteena, nyt tämä faktassa.
   - Is there field in DW for
     - date updated?
     - outgoing links (obs in inat, obs in gbif, photos in inat, sounds in inat)
   - What if a field is left empty? Is that ok, or should I avoid empty fields? (Note: the iNat JSON might have some elements missing, e.g. taxon is missing of there is not any identificationsor just a placeholder.)
+  - All the todo's here mentioning Esko
     
-
+  Ask iNat:
   How to have FinBIF here (not important, mostly curious...):
   This observation is featured on 1 site
 
@@ -142,8 +139,8 @@ function observationInat2Dw($inat) {
 
 
   // Description
-  if (!empty($inat['description'])) { // Does this handle NULLs?
-    array_push($descArr, $inat['description']);
+  if (!empty($inat['description'])) {
+    array_push($descArr, strip_tags($inat['description'])); // This also removes whitespace created by tags, e.g. <br> or </p><p>
   } 
 
   // Quality metrics
@@ -281,8 +278,8 @@ function observationInat2Dw($inat) {
   }
 
   // Taxon
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = removeNullFalse($inat['species_guess']); // todo: keep this? This can(?) be in any language, unclear what is based on - seems often be dependent on the language of the latest identifier.
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxon'] = removeNullFalse($inat['taxon']['name']); // todo: esko: this is the real taxon, where to put this?
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['species_guess']); // todo: keep this? This can(?) be in any language, unclear what is based on - seems often be dependent on the language of the latest identifier.
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxon'] = handleTaxon($inat['taxon']['name']); // todo: esko: this is the real taxon, where to put this?
 
 
   // Observations fields
@@ -313,7 +310,7 @@ function observationInat2Dw($inat) {
 
   // ----------------------------------------------------------------------------------------
 
-  // FIELDS TODO TO DW or MISSING FROM EXAMPLE
+  // TODO: FIELDS TODO TO DW or MISSING FROM EXAMPLE
 
   // Observer
   // Prefer full name over loginname
