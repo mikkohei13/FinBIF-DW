@@ -47,6 +47,7 @@ $dwObservations = Array();
 if (isset($_GET['debug'])) {
 //  $url = "http://api.inaturalist.org/v1/observations/" . $_GET['debug'] . "?include_new_projects=true"; // single
   $url = "https://api.inaturalist.org/v1/observations?id=" . $_GET['debug'] . "&order=desc&order_by=created_at&include_new_projects=true"; // multi
+  log2("DEBUG", "fetched url $url", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
   log2("DEBUG", "fetched id ".$_GET['debug'], "log/inat-obs-log.log");
@@ -56,11 +57,13 @@ if (isset($_GET['debug'])) {
 }
 // PRODUCTION
 else {
-  $perPage = 60;
-  $pagesLimit = 1;
-  $sleepSecondsBetweenPages = 1; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
+  $perPage = 50;
+  $pagesLimit = 10;
+  $sleepSecondsBetweenPages = 5; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
   
-  $page = 1; // Start value
+  $page = 10; // Start value
+
+  $pagesLimit = $pagesLimit + $page;
   
   // Per page
   while ($page <= $pagesLimit) {

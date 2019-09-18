@@ -78,6 +78,7 @@ function handleTaxon($taxon) {
 }
 
 function handleAnnotation($annotation) {
+
   /*
   Annotations describe three features: Life stage, plant phenology and Sex.
   The logic seems to be a bit difficult, if I uncderstand it correctly:
@@ -126,26 +127,36 @@ function handleAnnotation($annotation) {
   switch ($annotation['controlled_value_id']) {
     case 2:
       $ret['dwLifeStage'] = "MY.lifeStageAdult";
+      break;
     case 4:
       $ret['dwLifeStage'] = "MY.lifeStagePupa";
+      break;
     case 5:
       $ret['dwLifeStage'] = "MY.lifeStageNymph";
+      break;
     case 6:
       $ret['dwLifeStage'] = "MY.lifeStageLarva";
+      break;
     case 7:
       $ret['dwLifeStage'] = "MY.lifeStageEgg";
+      break;
     case 8:
       $ret['dwLifeStage'] = "MY.lifeStageJuvenile";
+      break;
     case 16:
       $ret['dwLifeStage'] = "MY.lifeStageSubimago";
+      break;
     case 13:
       $ret['dwLifeStage'] = "MY.plantLifeStageFlower";
+      break;
     case 10:
       $ret['dwSex'] = "MY.sexF";
+      break;
     case 11:
       $ret['dwSex'] = "MY.sexM";
+      break;
     default:
-      // Do nothing
+      break;
   }
 
   return $ret;

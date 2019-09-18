@@ -16,19 +16,9 @@ function observationInat2Dw($inat) {
   - without_taxon_id: [human id] (todo: remove human filter here)
 
   Decide:
-  - keep observerActivityCount? It will constantly change.
+  - 
   
   Todo:
-  - It seems that list quesy has different formats for annotations & projects (at least): they don't have the labels
-    Examples:
-    - annotations: 32818382
-    - project_observations: 20561213
-    - non_traditional_projects: ??
-    Options:
-      a) fetch projects, annotations from api
-      b) hard-code annotations
-      c) leave labels out for now, just use keywords for project id's and facts for other info
-  - Check that empty fields are ok when data is json
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
   - Filter mikkohei13 observations (will be duplicates, but have images...)
 
@@ -96,8 +86,6 @@ function observationInat2Dw($inat) {
   //todo: esko: where to put these?
   if ($inat['quality_metrics']) {
     $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
-
-    //    print_r ($qualityMetrics); // DEBUG
     foreach ($qualityMetrics as $key => $value) {
       $factsArr = factsArrayPush($factsArr, "quality_metrics_" . $key, $value, TRUE);
     }
@@ -105,23 +93,19 @@ function observationInat2Dw($inat) {
 
   // Projects
   // todo: do we need to store whether the project is trad/non-trad? Do they share identifier namespace?
-  // Non-traditional (automatic)
+  // Non-traditional / Collection (automatic)
   if (isset($inat['non_traditional_projects'])) {
     foreach($inat['non_traditional_projects'] as $projectNro => $project) {
-      //    print_r($project); // debug
       array_push($keywordsArr, "project-" . $project['project_id']);
-      $factsArr = factsArrayPush($factsArr, "projectTitle", $project['project']['title']);
-      $factsArr = factsArrayPush($factsArr, "projectId", $project['project_id']);
+      $factsArr = factsArrayPush($factsArr, "collectionProjectId", $project['project_id']);
     }
   }
 
   // Traditional (manual)
   if (isset($inat['project_observations'])) {
     foreach($inat['project_observations'] as $projectNro => $project) {
-//         echo "\nPROJECT NRO ".$projectNro.":\n"; print_r($project); // debug
-      array_push($keywordsArr, "project-" . $project['project_id']);
-      $factsArr = factsArrayPush($factsArr, "projectTitle", $project['project']['title']);   
-      $factsArr = factsArrayPush($factsArr, "projectId", $project['project_id']);
+      array_push($keywordsArr, "project-" . $project['project']['id']);
+      $factsArr = factsArrayPush($factsArr, "traditionalProjectId", $project['project']['id']);
     }
   }
 
@@ -211,7 +195,6 @@ function observationInat2Dw($inat) {
   if (!empty($inat['annotations'])) {
     foreach ($inat['annotations'] as $annotationNro => $annotation) {
       $anno = handleAnnotation($annotation);
-      print_r ($anno); // debug
       $factsArr = factsArrayPush($factsArr, $anno['attribute'], $anno['value']);
       
       // todo: esko: is sex ok here? values?
@@ -250,7 +233,7 @@ function observationInat2Dw($inat) {
   $factsArr = factsArrayPush($factsArr, "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_agree", $inat['identifications_most_agree']);
 //  $factsArr = factsArrayPush($factsArr, "identifications_most_disagree", $inat['identifications_most_disagree']);
-  $factsArr = factsArrayPush($factsArr, "observerActivityCount", $inat['user']['activity_count']);
+//  $factsArr = factsArrayPush($factsArr, "observerActivityCount", $inat['user']['activity_count']); // This is problematic because it increases over time -> is affected by *when* the observation was fetched from iNat
   $factsArr = factsArrayPush($factsArr, "owners_identification_from_vision", $inat['owners_identification_from_vision'], FALSE);
 //  $factsArr = factsArrayPush($factsArr, "", $inat(['']);
 
