@@ -77,6 +77,80 @@ function handleTaxon($taxon) {
   }
 }
 
+function handleAnnotation($annotation) {
+  /*
+  Annotations describe three features: Life stage, plant phenology and Sex.
+  The logic seems to be a bit difficult, if I uncderstand it correctly:
+    - Person B creates an observation
+    - Person A creates an annotation, e.g. saying Life stage is Adult
+    - Person B can vote for or against the annotation
+    - Person C, D etc. can vote for or against the annotation
+    - Person cannot create a new annotation about the same thing. He can (probably) remove person A's annotation and then create a new annotation. What then happens to the votes of B, C etc. ?
+
+    Because this is complicated, let's just save the original annotation as a fact for now. 
+    Todo: Find out the logic and decide what to do. Prepare also to the possibility that allowed values may change over time. 
+
+    Attributes:
+    1=Life Stage, 9=Sex, 12=Plant Phenology
+
+    Values:
+    Life Stage: 2=Adult, 3=Teneral, 4=Pupa, 5=Nymph, 6=Larva, 7=Egg, 8=Juvenile, 16=Subimago
+    Sex: 10=Female, 11=Male
+    Plant Phenology: 13=Flowering, 14=Fruiting, 15=Budding
+
+    See more at https://forum.inaturalist.org/t/how-to-use-inaturalists-search-urls-wiki/63
+
+  */
+  $annoAttributeMap[1] = "LifeStage";
+  $annoAttributeMap[9] = "Sex";
+  $annoAttributeMap[12] = "PlantPhenology";
+
+  $annoValueMap[2] = "Adult";
+  $annoValueMap[3] = "Teneral"; // unclear how this matches dw values -> not used
+  $annoValueMap[4] = "Pupa";
+  $annoValueMap[5] = "Nymph";
+  $annoValueMap[6] = "Larva";
+  $annoValueMap[7] = "Egg";
+  $annoValueMap[8] = "Juvenile";
+  $annoValueMap[16] = "Subimago";
+  $annoValueMap[10] = "Female";
+  $annoValueMap[11] = "Male";
+  $annoValueMap[13] = "Flowering";
+  $annoValueMap[14] = "Fruiting"; // unclear is this ripe vs. ripening -> not used
+  $annoValueMap[15] = "Budding"; // unclear whether this is bud or opened bud -> not used
+
+  $ret = Array();
+  $ret['attribute'] = $annoAttributeMap[$annotation['controlled_attribute_id']];
+  $ret['value'] = $annoValueMap[$annotation['controlled_value_id']];
+
+  switch ($annotation['controlled_value_id']) {
+    case 2:
+      $ret['dwLifeStage'] = "MY.lifeStageAdult";
+    case 4:
+      $ret['dwLifeStage'] = "MY.lifeStagePupa";
+    case 5:
+      $ret['dwLifeStage'] = "MY.lifeStageNymph";
+    case 6:
+      $ret['dwLifeStage'] = "MY.lifeStageLarva";
+    case 7:
+      $ret['dwLifeStage'] = "MY.lifeStageEgg";
+    case 8:
+      $ret['dwLifeStage'] = "MY.lifeStageJuvenile";
+    case 16:
+      $ret['dwLifeStage'] = "MY.lifeStageSubimago";
+    case 13:
+      $ret['dwLifeStage'] = "MY.plantLifeStageFlower";
+    case 10:
+      $ret['dwSex'] = "MY.sexF";
+    case 11:
+      $ret['dwSex'] = "MY.sexM";
+    default:
+      // Do nothing
+  }
+
+  return $ret;
+}
+
 /*
 $projectKeywords = inatProjects2keywords($inat['non_traditional_projects']);
 

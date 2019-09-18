@@ -208,25 +208,19 @@ function observationInat2Dw($inat) {
 
 
   // Annotations
-  /*
-  Annotations describe three features: Life stage, plant phenology and Sex.
-  The logic seems to be a bit difficult, if I uncderstand it correctly:
-    - Person B creates an observation
-    - Person A creates an annotation, e.g. saying Life stage is Adult
-    - Person B can vote for or against the annotation
-    - Person C, D etc. can vote for or against the annotation
-    - Person cannot create a new annotation about the same thing. He can (probably) remove person A's annotation and then create a new annotation. What then happens to the votes of B, C etc. ?
-
-    Annotations:
-    1=Life Stage, 9=Sex, 12=Plant Phenology
-    see more at https://forum.inaturalist.org/t/how-to-use-inaturalists-search-urls-wiki/63
-
-    Because this is complicated, let's just save the original annotation as a fact for now. 
-    Todo: Find out the logic and decide what to do. Prepare also to the possibility that allowed values may change over time. 
-  */
   if (!empty($inat['annotations'])) {
     foreach ($inat['annotations'] as $annotationNro => $annotation) {
-      $factsArr = factsArrayPush($factsArr, $annotation['controlled_attribute']['label'], $annotation['controlled_value']['label']);
+      $anno = handleAnnotation($annotation);
+      print_r ($anno); // debug
+      $factsArr = factsArrayPush($factsArr, $anno['attribute'], $anno['value']);
+      
+      // todo: esko: is sex ok here? values?
+      if (isset($anno['dwLifeStage'])) {
+        $dw['publicDocument']['gatherings'][0]['units'][0]['lifeStage'] = $anno['dwLifeStage'];
+      }
+      if (isset($anno['dwSex'])) {
+        $dw['publicDocument']['gatherings'][0]['units'][0]['sex'] = $anno['dwSex'];
+      }
     }
   }
 
