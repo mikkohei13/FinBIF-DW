@@ -1,6 +1,8 @@
 <?php
 
-function postToAPItest($json, $apitestAccessToken) {
+function postToAPItest($json) {
+
+  GLOBAL $apitestAccessToken;
 
   $apiURL = "https://apitest.laji.fi/v0/warehouse/push?access_token=" . $apitestAccessToken;
 

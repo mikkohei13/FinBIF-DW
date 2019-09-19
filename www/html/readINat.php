@@ -9,42 +9,62 @@ require_once "postToAPI.php";
 
 
 $database = new mysqlDb();
-$database->connect("inat_push"); // todo: prod, test, dryrun 
+$database->connect("inat_push"); // todo: prod, test
 
 
 // todo: log errors locally, so that I know if some field is missing or something unexpected
 // todo try catch for conversion?
 /*
-Options
-- single | all | since last update | all + delete | delete single
-- dryrun (just display) | save to test | save to prod
+Params
+- MODE: single | all | since last update | all + delete | delete single
+- DESTINATION: dryrun (just display) | save to test | save to prod
+- KEY: id or time to begin *after*
+
+Error handling
+- If error happens:
+  - Log error
+  - Stop processing with exit()
+
+todo: check that all exit's have logging
+
+Test values
+key = 33084315; // Violettiseitikki submitted on 20.9.2019
+
 */
 
 echo "<pre>";
 
 // ------------------------------------------------------------------------------------------------
 
+// Check that params are set
+if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination'])) {
+  exit ("Exited due to missing parameters.");
+}
 
-// DEBUG
-if (isset($_GET['debug'])) {
-  echo "Debug mode, just echoing...";
+// GET and convert observations
+// SINGLE
+if ("single" == $_GET['mode']) {
+  log2("NOTICE", "Started: single " . $_GET['key'], "log/inat-obs-log.log");
+
   $dwObservations = Array();
 
-  $data = getObsArr_singleId($_GET['debug']);
+  $data = getObsArr_singleId($_GET['key']);
   $dwObservations[] = observationInat2Dw($data['results'][0]);
-  print_r ($dwObservations);
 
-  echo hashInatObservation($data['results'][0]);
+  pushFactory($dwObservations, $_GET['destination']);
+  logObservationsToDatabase($data['results'], 0, $database);
+
+//  print_r ($dwObservations);
+//  echo hashInatObservation($data['results'][0]);
 }
-// PRODUCTION
-else {
+// ALL
+elseif ("all" == $_GET['mode']) {
+  log2("NOTICE", "Started: all " . $_GET['key'], "log/inat-obs-log.log");
   // See max 10k observations bug: https://github.com/inaturalist/iNaturalistAPI/issues/134
 
   $perPage = 2;
   $getLimit = 2;
-  $idAbove = 0; // Start value
-  $idAbove = 33084315; // Test value for observation submitted on 20.9.2019
-
+  $idAbove = $_GET['key'];
   $sleepSecondsBetweenGets = 2; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
 
   $i = 1;
@@ -69,28 +89,12 @@ else {
       // Todo: log and exit() if error converting
       $dwObservations[] = observationInat2Dw($obs);
 
-      // Log to database
-      $hash = hashInatObservation($obs);
-      $result = $database->push($obs['id'], $hash, 0);
-      if (!$result) {
-        echo $database->error . "\n";
-      }
-
       // Prepare for next observation
       $idAbove = $obs['id'];
     }
 
-    // Compile json file to be sent
-    $dwJson = compileDwJson($dwObservations);
-
-    $response = postToAPItest($dwJson, $apitestAccessToken);
-    if (200 == $response['http_code']) {
-      log2("SUCCESS", "API responded " . $response['http_code'], "log/inat-obs-log.log");
-    }
-    else {
-      log2("ERROR", "API responded " . $response['http_code'] . " / " . json_encode($response), "log/inat-obs-log.log");
-      exit("Exited due to error POSTing to API. See log for details.");
-    }
+    pushFactory($dwObservations, $_GET['destination']);
+    logObservationsToDatabase($data['results'], 0, $database);
 
     // Prepare for next round
     $i++;
@@ -104,6 +108,58 @@ $database->close();
 
 
 //--------------------------------------------------------------------------
+
+function pushFactory($dwObservations, $destination) {
+  if ("dryrun" == $destination) {
+    pushToEcho($dwObservations);
+  }
+  elseif ("test" == $destination) {
+    pushToTestDw($dwObservations);
+  }
+  // Todo here: Push to production
+  else {
+    exit("Exited due to unknown destination value");
+  }
+  return NULL;
+}
+
+function pushToEcho($dwObservations) {
+  log2("NOTICE", "Pushing to dryrun", "log/inat-obs-log.log");
+  echo "DRYRUN...\n\n";
+  print_r ($dwObservations);
+}
+
+function pushToTestDw($dwObservations) {
+  log2("NOTICE", "Pushing to test DW", "log/inat-obs-log.log");
+  echo "PUSHING TO TEST DW...\n\n";
+
+  // Compile json file to be sent
+  $dwJson = compileDwJson($dwObservations);
+
+  $response = postToAPItest($dwJson);
+  if (200 == $response['http_code']) {
+    log2("SUCCESS", "API responded " . $response['http_code'], "log/inat-obs-log.log");
+  }
+  else {
+    log2("ERROR", "API responded " . $response['http_code'] . " / " . json_encode($response), "log/inat-obs-log.log");
+    exit("Exited due to error POSTing to API. See log for details.");
+  }
+  return NULL;
+}
+
+function logObservationsToDatabase($observations, $status, $database) {
+
+  foreach ($observations as $nro => $obs) {
+    $hash = hashInatObservation($obs);
+    $result = $database->push($obs['id'], $hash, $status);
+    if (!$result) {
+      log2("ERROR", "Database error " . $database->error, "log/inat-obs-log.log");
+      exit("exited due to database error.");
+    }
+  }
+
+  return NULL;
+}
 
 function compileDwJson($dwObservations) {
   $dwRoot = Array();

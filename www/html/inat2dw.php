@@ -295,7 +295,7 @@ function observationInat2Dw($inat) {
   }
 
 
-  log2("SUCCESS", "handled observation\t" . $inat['id'] . " of " . $inat['taxon']['name'] . " at " . $inat['observed_on_details']['date'], "log/inat-obs-log.log");
+  log2("SUCCESS", "Converted observation\t" . $inat['id'] . " of " . $inat['taxon']['name'] . " on " . $inat['observed_on_details']['date'], "log/inat-obs-log.log");
   echo "handled ".$inat['id']."\n"; // debug
 
 
