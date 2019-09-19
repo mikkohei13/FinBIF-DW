@@ -17,15 +17,7 @@ $dwObservations = Array();
 
 // DEBUG
 if (isset($_GET['debug'])) {
-  $url = "https://api.inaturalist.org/v1/observations?id=" . $_GET['debug'] . "&order=desc&order_by=created_at&include_new_projects=true"; // multi
-  echo $url . "\n";
-
-  log2("DEBUG", "fetched url $url", "log/inat-obs-log.log");
-
-  $observationsJson = file_get_contents($url);
-  log2("DEBUG", "fetched id ".$_GET['debug'], "log/inat-obs-log.log");
-
-  $data = json_decode($observationsJson, TRUE);
+  $data = getObsArr_singleId($_GET['debug']);
   $dwObservations[] = observationInat2Dw($data['results'][0]);
 }
 // PRODUCTION
@@ -36,15 +28,14 @@ else {
   $perPage = 10;
   $getLimit = 2;
   $idAbove = 0; // Start value
-  $idAbove = 33084315;
+  $idAbove = 33084315; // Test value for observation submitted on 20.9.2019
 
   $i = 1;
 
-  // Per get
+  // Per GET
   while ($i <= $getLimit) {
 
-    $observationsJson = getObservationsJson($idAbove, $perPage);
-    $data = json_decode($observationsJson, TRUE);
+    $data = getObsArr_basedOnId($idAbove, $perPage);
 
     if (0 === $data['total_results']) {
       log2("NOTICE", "No more results from API with idAbove " . $idAbove, "log/inat-obs-log.log");
@@ -118,21 +109,22 @@ log2("NOTICE", "finished", "log/inat-obs-log.log");
 //--------------------------------------------------------------------------
 
 
-function getObservationsJson($idAbove, $perPage) {
-
-//  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=" . $page . "&per_page=" . $perPage . "&order=desc&order_by=created_at"; // original
-
+function getObsArr_basedOnId($idAbove, $perPage) {
   $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove; // new, to avoid pagination bug
 
   echo $url . "\n"; // debug
+  log2("NOTICE", "Fetched $perPage obs with idAbove $idAbove", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
-  log2("NOTICE", "Fetched $perPage obs starting from $idAbove", "log/inat-obs-log.log");
-
-  //echo $json;
-
-  // todo: handle end of data
-
-  return $observationsJson;
+  return json_decode($observationsJson, TRUE);
 }
 
+function getObsArr_singleId($id) {
+  $url = "https://api.inaturalist.org/v1/observations?id=" . $id . "&order=desc&order_by=created_at&include_new_projects=true"; // Fetch single obs using observations endpoint, in order to get in in consistent format
+
+  echo $url . "\n"; // debug
+  log2("DEBUG", "fetched url $url", "log/inat-obs-log.log");
+
+  $observationsJson = file_get_contents($url);
+  return json_decode($observationsJson, TRUE);
+}
