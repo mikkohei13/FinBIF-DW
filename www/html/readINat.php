@@ -4,7 +4,9 @@ require_once "inatHelpers.php";
 require_once "log2.php";
 require_once "inat2dw.php";
 require_once "mysql.php";
+require_once "_secrets.php";
 require_once "postToAPI.php";
+
 
 $database = new mysqlDb();
 $database->connect("inat_push"); // todo: prod, test, dryrun 
@@ -59,17 +61,22 @@ else {
     foreach ($data['results'] as $nro => $obs) {
 //      print_r (obs);
 //      echo $obs['id'] . "\n"; // debug
-      $idAbove = $obs['id'];
+
+      // Convert
       $dwObs = observationInat2Dw($obs);
 
-      // Todo: log and exit() is error
+      // Todo: log and exit() if error
 
       $dwObservations[] = $dwObs;
+
+      // Log to database
       $hash = hashInatObservation($obs);
       $result = $database->push($obs['id'], $hash, 0);
       if (!$result) {
         echo $database->error . "\n";
       }
+
+      $idAbove = $obs['id'];
     }
 
     $i++;
@@ -77,19 +84,19 @@ else {
   }
 }
 
+// todo: move this to GET while, so that 15k obs are not sent as one file...
+// todo: if error from api, stop processing and log error
 // Compile json file to be sent
 $dwRoot = Array();
 $dwRoot['schema'] = "laji-etl";
 $dwRoot['roots'] = $dwObservations;
 
-// Send to API
-/*
-$apiResponse = postToAPI($dwRoot);
-log2("NOTICE", "API responded " . $apiResponse['code'], "log/inat-obs-log.log");
-*/
+$dwJson = json_encode($dwRoot);
+echo "\n" . $dwJson . "\n";
 
-//print_r ($dwRoot); // debug
-//print_r (json_encode($dwRoot)); // debug
+$response = postToAPItest($dwJson, $apitestAccessToken);
+log2("NOTICE", "API responded " . $response['http_code'], "log/inat-obs-log.log");
+
 
 
 log2("NOTICE", "finished", "log/inat-obs-log.log");

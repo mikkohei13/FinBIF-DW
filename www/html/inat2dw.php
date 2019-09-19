@@ -70,6 +70,8 @@ function observationInat2Dw($inat) {
 
   // Id's
   $documentId = "https://www.inaturalist.org/observations/" . $inat['id']; // Note: GBIF also uses this as an occurrence ID  
+//  $documentId = "http://tun.fi/HR.3211/" . $inat['id']; // Test
+
   $dw['documentId'] = $documentId;
   $dw['publicDocument']['documentId'] = $documentId;
   $dw['publicDocument']['gatherings'][0]['gatheringId'] = $documentId . "-G";
