@@ -3,10 +3,20 @@
 require_once "inatHelpers.php";
 require_once "log2.php";
 require_once "inat2dw.php";
+require_once "mysql.php";
 require_once "postToAPI.php";
+
+$database = new mysqlDb();
+$database->connect("inat_push"); // todo: prod, test, dryrun 
+
 
 // todo: log errors locally, so that I know if some field is missing or something unexpected
 // todo try catch for conversion?
+/*
+Options
+- single | all | since last update | all + delete | delete single
+- dryrun (just display) | save to test | save to prod
+*/
 
 echo "<pre>";
 
@@ -19,6 +29,8 @@ $dwObservations = Array();
 if (isset($_GET['debug'])) {
   $data = getObsArr_singleId($_GET['debug']);
   $dwObservations[] = observationInat2Dw($data['results'][0]);
+
+  echo hashInatObservation($data['results'][0]);
 }
 // PRODUCTION
 else {
@@ -48,7 +60,16 @@ else {
 //      print_r (obs);
 //      echo $obs['id'] . "\n"; // debug
       $idAbove = $obs['id'];
-      $dwObservations[] = observationInat2Dw($obs);
+      $dwObs = observationInat2Dw($obs);
+
+      // Todo: log and exit() is error
+
+      $dwObservations[] = $dwObs;
+      $hash = hashInatObservation($obs);
+      $result = $database->push($obs['id'], $hash, 0);
+      if (!$result) {
+        echo $database->error . "\n";
+      }
     }
 
     $i++;
@@ -72,6 +93,9 @@ log2("NOTICE", "API responded " . $apiResponse['code'], "log/inat-obs-log.log");
 
 
 log2("NOTICE", "finished", "log/inat-obs-log.log");
+
+$database->close();
+
 
 //--------------------------------------------------------------------------
 

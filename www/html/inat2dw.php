@@ -11,7 +11,7 @@ function observationInat2Dw($inat) {
   Example obs:
   - without date and taxon: https://www.inaturalist.org/observations/30092946
   
-  This expects that certain obserations are filtered out in the API call:
+  This expects that certain observations are filtered out in the API call:
   - Non-Finnish. If this is exapanded to other countries, remove hard-coded country name. Also note that country name may be in any language or abbreviation (Finland, FI, Suomi...).
   - Observations without license
   - Captive/cultivated 

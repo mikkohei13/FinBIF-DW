@@ -197,3 +197,28 @@ function getLicenseUrl($licenseCode) {
   }
   return $ret;
 }
+
+function hashInatObservation($inat) {
+  if (!is_array($inat)) {
+    return "not an array, " . time();
+  }
+
+//  print_r ($inat);
+
+  unset($inat['place_ids']);
+
+  $inat['moved']['taxonName'] = $inat['taxon']['name'];
+  unset($inat['taxon']);
+
+  unset($inat['ident_taxon_ids']);
+  unset($inat['faves_count']);
+
+  $inat['moved']['userLogin_exact'] = $inat['user']['login_exact'];
+  unset($inat['user']);
+  
+  unset($inat['identifications']); // Id's always change id count -> detailed information is not needed for hash
+  unset($inat['non_owner_ids']);
+  
+  // Hash
+  return sha1(serialize($inat));
+}

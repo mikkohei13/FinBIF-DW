@@ -7,7 +7,7 @@ require_once "log2.php";
 
 log2("ok", "Script started");
 
-
+/*
 // Database
 
 $database = new mysqlDb();
@@ -47,3 +47,4 @@ else {
 echo " / END";
 $database->close();
 
+*/

@@ -69,6 +69,12 @@ class mysqlDb
     }
 
     public function push($id, $hash = "", $status = 0) {
+        /*
+        Statuses:
+         0 = default
+         1 = monthly update done, no need to delete
+         -1 = deleted
+        */
         $IDExists = $this->doesIDExist($id); 
         if (TRUE === $IDExists) {
             // UPDATE
@@ -81,6 +87,11 @@ class mysqlDb
         else {
             return FALSE;
         }
+    }
+
+    public function updateStatus($id, $status) {
+        // TODO
+        // Update
     }
 
     public function doesIDExist($id) {
