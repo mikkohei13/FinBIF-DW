@@ -24,13 +24,15 @@ echo "<pre>";
 
 // ------------------------------------------------------------------------------------------------
 
-$dwObservations = Array();
-
 
 // DEBUG
 if (isset($_GET['debug'])) {
+  echo "Debug mode, just echoing...";
+  $dwObservations = Array();
+
   $data = getObsArr_singleId($_GET['debug']);
   $dwObservations[] = observationInat2Dw($data['results'][0]);
+  print_r ($dwObservations);
 
   echo hashInatObservation($data['results'][0]);
 }
@@ -38,7 +40,7 @@ if (isset($_GET['debug'])) {
 else {
   // See max 10k observations bug: https://github.com/inaturalist/iNaturalistAPI/issues/134
 
-  $perPage = 10;
+  $perPage = 2;
   $getLimit = 2;
   $idAbove = 0; // Start value
   $idAbove = 33084315; // Test value for observation submitted on 20.9.2019
@@ -49,6 +51,7 @@ else {
 
   // Per GET
   while ($i <= $getLimit) {
+    $dwObservations = Array();
 
     $data = getObsArr_basedOnId($idAbove, $perPage);
 
@@ -63,11 +66,8 @@ else {
 //      echo $obs['id'] . "\n"; // debug
 
       // Convert
-      $dwObs = observationInat2Dw($obs);
-
-      // Todo: log and exit() if error
-
-      $dwObservations[] = $dwObs;
+      // Todo: log and exit() if error converting
+      $dwObservations[] = observationInat2Dw($obs);
 
       // Log to database
       $hash = hashInatObservation($obs);
@@ -76,36 +76,45 @@ else {
         echo $database->error . "\n";
       }
 
+      // Prepare for next observation
       $idAbove = $obs['id'];
     }
 
+    // Compile json file to be sent
+    $dwJson = compileDwJson($dwObservations);
+
+    $response = postToAPItest($dwJson, $apitestAccessToken);
+    if (200 == $response['http_code']) {
+      log2("SUCCESS", "API responded " . $response['http_code'], "log/inat-obs-log.log");
+    }
+    else {
+      log2("ERROR", "API responded " . $response['http_code'] . " / " . json_encode($response), "log/inat-obs-log.log");
+      exit("Exited due to error POSTing to API. See log for details.");
+    }
+
+    // Prepare for next round
     $i++;
-    sleep($sleepSecondsBetweenGets);
+    sleep($sleepSecondsBetweenGets); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
 }
 
-// todo: move this to GET while, so that 15k obs are not sent as one file...
-// todo: if error from api, stop processing and log error
-// Compile json file to be sent
-$dwRoot = Array();
-$dwRoot['schema'] = "laji-etl";
-$dwRoot['roots'] = $dwObservations;
-
-$dwJson = json_encode($dwRoot);
-echo "\n" . $dwJson . "\n";
-
-$response = postToAPItest($dwJson, $apitestAccessToken);
-log2("NOTICE", "API responded " . $response['http_code'], "log/inat-obs-log.log");
-
-
-
-log2("NOTICE", "finished", "log/inat-obs-log.log");
+log2("NOTICE", "Finished", "log/inat-obs-log.log");
 
 $database->close();
 
 
 //--------------------------------------------------------------------------
 
+function compileDwJson($dwObservations) {
+  $dwRoot = Array();
+  $dwRoot['schema'] = "laji-etl";
+  $dwRoot['roots'] = $dwObservations;
+  $dwJson = json_encode($dwRoot);
+
+  echo "\n" . $dwJson . "\n"; // debug
+
+  return $dwJson;
+}
 
 function getObsArr_basedOnId($idAbove, $perPage) {
   $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove; // new, to avoid pagination bug
