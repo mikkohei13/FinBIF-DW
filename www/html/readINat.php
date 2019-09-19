@@ -25,10 +25,19 @@ Error handling
   - Log error
   - Stop processing with exit()
 
-todo: check that all exit's have logging
-
 Test values
 key = 33084315; // Violettiseitikki submitted on 20.9.2019
+
+TODO:
+- Fix DW errors
+- See push plan in readme
+- Check that all exit's have logging
+- Add since last update -mode, first using last update time as param
+- Then handle last update time in database
+...
+- all + delete
+- delete single
+
 
 */
 
