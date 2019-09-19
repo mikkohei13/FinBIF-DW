@@ -22,13 +22,14 @@ if (isset($_GET['debug'])) {
 }
 // PRODUCTION
 else {
-
   // See max 10k observations bug: https://github.com/inaturalist/iNaturalistAPI/issues/134
 
   $perPage = 10;
   $getLimit = 2;
   $idAbove = 0; // Start value
   $idAbove = 33084315; // Test value for observation submitted on 20.9.2019
+
+  $sleepSecondsBetweenGets = 2; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
 
   $i = 1;
 
@@ -45,46 +46,14 @@ else {
     // Per observation
     foreach ($data['results'] as $nro => $obs) {
 //      print_r (obs);
-      echo $obs['id'] . "\n";
+//      echo $obs['id'] . "\n"; // debug
       $idAbove = $obs['id'];
-//      $dwObservations[] = observationInat2Dw($obs);
+      $dwObservations[] = observationInat2Dw($obs);
     }
 
     $i++;
+    sleep($sleepSecondsBetweenGets);
   }
-
-  /*
-  $perPage = 10;
-  $pagesLimit = 2;
-  $sleepSecondsBetweenPages = 2; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
-  
-  $page = 1;
-
-  $pagesLimit = $pagesLimit + $page;
-  
-  // Per page
-  while ($page <= $pagesLimit) {
-    $observationsJson = getObservationsJson($page, $perPage);
-    $data = json_decode($observationsJson, TRUE);
-  
-//    $meta['totalResults'] = $data['total_results']; 
-//    $meta['page'] = $data['page'];
-//    $meta['perPage'] = $data['per_page'];
-//    $meta['pagesTotal'] = ceil($meta['totalResults'] / $meta['perPage']);
-//    $meta['pagesToGo'] = $meta['pagesTotal'] - $meta['page'];
-    
-    //print_r ($meta);
-  
-    // Per observation
-    // Convert from iNat to DW format
-    foreach ($data['results']  as $nro => $obs) {
-      $dwObservations[] = observationInat2Dw($obs);
-    }
-  
-    $page++;
-    sleep($sleepSecondsBetweenPages);
-  }  
-  */
 }
 
 // Compile json file to be sent
@@ -100,8 +69,6 @@ log2("NOTICE", "API responded " . $apiResponse['code'], "log/inat-obs-log.log");
 
 //print_r ($dwRoot); // debug
 //print_r (json_encode($dwRoot)); // debug
-
-
 
 
 log2("NOTICE", "finished", "log/inat-obs-log.log");
