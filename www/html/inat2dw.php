@@ -259,13 +259,14 @@ function observationInat2Dw($inat) {
 
   // Observer
   // Prefer full name over loginname
-  if ($inat['user']['name']) {
+  if (isset($inat['user']['name'])) {
     $observer = $inat['user']['name'];
   }
   else {
     $observer = $inat['user']['login'];
   }
-  $dw['observer'] = $observer;
+  $dw['publicDocument']['gatherings'][0]['team'][0] = $observer;
+
   $dw['observerId'] = "inaturalist:" . $inat['user']['id'];
   if (!empty($inat['user']['orcid'])) {
     $dw['observerOrcid'] = $inat['user']['orcid'];
