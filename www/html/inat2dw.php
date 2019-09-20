@@ -36,8 +36,6 @@ function observationInat2Dw($inat) {
   - Media-url:it faktoina, mieti yleiskäyttöiset termit
     - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
   - date updated on document-tasolla, ks. esimerkki single-querysta
-  - Koordinaatit bounding boxilla, vaikka pistemäisiä. (Tai geojson, joka ei kuitenkaan tue piste+säde koordinaatteja.)
-  - Gatheringin ja unitin id:ksi documentID-G ja documentID-U
   - havainnoija gathering.team Array of strings, etunimi sukunimi
   - havainnoijan inat-id kahteen kenttään: documentUserID's ja gatheringUsedID:hen, muodossa KE.[numero]:[inat-käyttäjänumero]
   - observerOrcid faktaksi
@@ -78,7 +76,7 @@ function observationInat2Dw($inat) {
   $descArr = Array();
   $factsArr = Array();
 
-  
+
   // Id's
   $documentId = "https://www.inaturalist.org/observations/" . $inat['id']; // Note: GBIF also uses this as an occurrence ID  
   $dw['documentId'] = $documentId;
@@ -131,25 +129,32 @@ function observationInat2Dw($inat) {
 
   $factsArr = factsArrayPush($factsArr, "D", "observedOrCreatedAt", $inat['time_observed_at']);
 
-
-  // Coordinate accuracy
-  $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "wgs84";
-
-  if (empty($inat['positional_accuracy'])) {
-    $accuracy = 1000; // Default for missing values
-  }
-  elseif ($inat['positional_accuracy'] < 10) {
-    $accuracy = 10; // Minimum value
-  }
-  else {
-    $accuracy = round($inat['positional_accuracy'], 0);
-  }
-  $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = $accuracy;
-
   // Coordinates
-  $dw['publicDocument']['gatherings'][0]['coordinates']['lon'] = removeNullFalse($inat['geojson']['coordinates'][0]); // todo: Esko: is this correct for point coords?
-  $dw['publicDocument']['gatherings'][0]['coordinates']['lat'] = removeNullFalse($inat['geojson']['coordinates'][1]);
+  if ($inat['mappable']) {
+    // Coordinate accuracy
+    $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "wgs84";
 
+    if (empty($inat['positional_accuracy'])) {
+      $accuracy = 1000; // Default for missing values
+    }
+    elseif ($inat['positional_accuracy'] < 10) {
+      $accuracy = 10; // Minimum value
+    }
+    else {
+      $accuracy = round($inat['positional_accuracy'], 0); // Round to one meter
+    }
+    $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = $accuracy;
+
+    // Coordinates
+    // Rounding, see https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude/8674#8674
+    $lon = round(removeNullFalse($inat['geojson']['coordinates'][0]), 6);
+    $lat = round(removeNullFalse($inat['geojson']['coordinates'][1]), 6);
+
+    $dw['publicDocument']['gatherings'][0]['coordinates']['lonMin'] = $lon;
+    $dw['publicDocument']['gatherings'][0]['coordinates']['lonMax'] = $lon;
+    $dw['publicDocument']['gatherings'][0]['coordinates']['latMin'] = $lat;
+    $dw['publicDocument']['gatherings'][0]['coordinates']['latMax'] = $lat;
+  }
 
   // Locality
   $locality = stringReverse($inat['place_guess']);
