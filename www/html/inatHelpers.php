@@ -7,8 +7,11 @@ function stringReverse($string) {
   return $reversedString;
 }
 
-function factsArrayPush($factsArr, $fact, $value, $preserveZeroAndFalse = FALSE) {
+function factsArrayPush($factsArr, $level, $fact, $value, $preserveZeroAndFalse = FALSE) {
 
+  if ($level !== "D" && $level !== "G" && $level !== "U") {
+    exit("Error: Level must be D, G or U");
+  }
 //  echo $fact .":". $value; // debug
 
   // Don't preserve non-set values
@@ -31,7 +34,7 @@ function factsArrayPush($factsArr, $fact, $value, $preserveZeroAndFalse = FALSE)
   $newArr['fact'] = preg_replace('/[^\w]/', '', $fact); // Remove spaces, special chars etc. from fact names. Does this handle all cases? Seems to allow _ but not ÅÄÖåäö-".,;:
   $newArr['value'] = $value;
 
-  $factsArr[] = $newArr;
+  $factsArr[$level][] = $newArr;
   return $factsArr;
 }
 

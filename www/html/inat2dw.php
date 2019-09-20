@@ -40,8 +40,6 @@ function observationInat2Dw($inat) {
   - Koordinaatit bounding boxilla, vaikka pistemäisiä. (Tai geojson, joka ei kuitenkaan tue piste+säde koordinaatteja.)
   - Dokumentin id:ksi inat-url https:lla. Tarkista että GBIF:lla sama.
   - Gatheringin ja unitin id:ksi documentID-G ja documentID-U
-  - Tieteellinen taksoninimi verbatim-kenttään.
-  - Verbatim-nimi faktaan
   - havainnoija gathering.team Array of strings, etunimi sukunimi
   - havainnoijan inat-id kahteen kenttään: documentUserID's ja gatheringUsedID:hen, muodossa KE.[numero]:[inat-käyttäjänumero]
   - observerOrcid faktaksi
@@ -89,8 +87,8 @@ function observationInat2Dw($inat) {
   $dw['documentId'] = $documentId;
   $dw['publicDocument']['documentId'] = $documentId; // todo: Esko: why documentId twice?
 
-  $factsArr = factsArrayPush($factsArr, "inaturalistId", $inat['id'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "inaturalistUri", "https://www.inaturalist.org/observations/" . $inat['id'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "D", "inaturalistId", $inat['id'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "D", "inaturalistUri", "https://www.inaturalist.org/observations/" . $inat['id'], TRUE);
   array_push($keywordsArr, $inat['id']); // todo: Esko: is this the correct place?
 
 
@@ -106,7 +104,7 @@ function observationInat2Dw($inat) {
   if ($inat['quality_metrics']) {
     $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
     foreach ($qualityMetrics as $key => $value) {
-      $factsArr = factsArrayPush($factsArr, "quality_metrics_" . $key, $value, TRUE);
+      $factsArr = factsArrayPush($factsArr, "D", "quality_metrics_" . $key, $value, TRUE);
     }
   }
 
@@ -116,7 +114,7 @@ function observationInat2Dw($inat) {
   if (isset($inat['non_traditional_projects'])) {
     foreach($inat['non_traditional_projects'] as $projectNro => $project) {
       array_push($keywordsArr, "project-" . $project['project_id']);
-      $factsArr = factsArrayPush($factsArr, "collectionProjectId", $project['project_id']);
+      $factsArr = factsArrayPush($factsArr, "D", "collectionProjectId", $project['project_id']);
     }
   }
 
@@ -124,7 +122,7 @@ function observationInat2Dw($inat) {
   if (isset($inat['project_observations'])) {
     foreach($inat['project_observations'] as $projectNro => $project) {
       array_push($keywordsArr, "project-" . $project['project']['id']);
-      $factsArr = factsArrayPush($factsArr, "traditionalProjectId", $project['project']['id']);
+      $factsArr = factsArrayPush($factsArr, "D", "traditionalProjectId", $project['project']['id']);
     }
   }
 
@@ -132,7 +130,7 @@ function observationInat2Dw($inat) {
   $dw['createdDate'] = $inat['created_at_details']['date'];
   $dw['eventDate']['begin'] = removeNullFalse($inat['observed_on_details']['date']);
 
-  $factsArr = factsArrayPush($factsArr, "observedOrCreatedAt", $inat['time_observed_at']);
+  $factsArr = factsArrayPush($factsArr, "D", "observedOrCreatedAt", $inat['time_observed_at']);
 
 
   // Coordinate accuracy
@@ -178,9 +176,9 @@ function observationInat2Dw($inat) {
   if ($photoCount >= 1) {
     array_push($keywordsArr, "has_photos");
     foreach ($inat['observation_photos'] as $photoNro => $photo) {
-      $factsArr = factsArrayPush($factsArr, "photoId", $photo['photo']['id']);
+      $factsArr = factsArrayPush($factsArr, "U", "photoId", $photo['photo']['id']);
     }
-    $factsArr = factsArrayPush($factsArr, "photoCount", $photoCount);
+    $factsArr = factsArrayPush($factsArr, "U", "photoCount", $photoCount);
   }
 
 
@@ -189,10 +187,10 @@ function observationInat2Dw($inat) {
   if ($soundCount >= 1) {
     array_push($keywordsArr, "has_sounds");
     foreach ($inat['sounds'] as $soundNro => $sound) {
-      $factsArr = factsArrayPush($factsArr, "soundId", $sound['id']);
+      $factsArr = factsArrayPush($factsArr, "U", "soundId", $sound['id']);
       array_push($descArr, "sound file: " . $sound['file_url']); // todo: esko: where this to? outgoing links, urls, description field? Do the same for photos, if they have static urls?
     }
-    $factsArr = factsArrayPush($factsArr, "soundCount", $soundCount);
+    $factsArr = factsArrayPush($factsArr, "U", "soundCount", $soundCount);
   }
 
 
@@ -208,7 +206,7 @@ function observationInat2Dw($inat) {
   if (!empty($inat['annotations'])) {
     foreach ($inat['annotations'] as $annotationNro => $annotation) {
       $anno = handleAnnotation($annotation);
-      $factsArr = factsArrayPush($factsArr, $anno['attribute'], $anno['value']);
+      $factsArr = factsArrayPush($factsArr, "U", $anno['attribute'], $anno['value']);
       
       // todo: esko: is sex ok here? values?
       if (isset($anno['dwLifeStage'])) {
@@ -222,33 +220,33 @@ function observationInat2Dw($inat) {
 
   // Taxon
   $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['taxon']['name']);
-  $factsArr = factsArrayPush($factsArr, "taxonVerbatim", handleTaxon($inat['species_guess']));
+  $factsArr = factsArrayPush($factsArr, "U", "taxonVerbatim", handleTaxon($inat['species_guess']));
 
 
   // Observations fields
   foreach($inat['ofvs'] as $ofvsNro => $ofvs) {
-    $factsArr = factsArrayPush($factsArr, $ofvs['name_ci'], $ofvs['value_ci'], TRUE); // This must preserve zero values
+    $factsArr = factsArrayPush($factsArr, "U", $ofvs['name_ci'], $ofvs['value_ci'], TRUE); // This must preserve zero values
   }
 
   // Quality grade
-  $factsArr = factsArrayPush($factsArr, "quality_grade", $inat['quality_grade']);
+  $factsArr = factsArrayPush($factsArr, "D", "quality_grade", $inat['quality_grade']);
   array_push($keywordsArr, $inat['quality_grade']);
 
   // Misc facts
   // todo: are all of these needed / valuable?
-  $factsArr = factsArrayPush($factsArr, "out_of_range", $inat['out_of_range'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "comments_count", $inat['comments_count'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "num_identification_agreements", $inat['num_identification_agreements'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
-//  $factsArr = factsArrayPush($factsArr, "identifications_most_agree", $inat['identifications_most_agree']);
-//  $factsArr = factsArrayPush($factsArr, "identifications_most_disagree", $inat['identifications_most_disagree']);
-//  $factsArr = factsArrayPush($factsArr, "observerActivityCount", $inat['user']['activity_count']); // This is problematic because it increases over time -> is affected by *when* the observation was fetched from iNat
-  $factsArr = factsArrayPush($factsArr, "owners_identification_from_vision", $inat['owners_identification_from_vision'], FALSE);
-//  $factsArr = factsArrayPush($factsArr, "", $inat(['']);
+  $factsArr = factsArrayPush($factsArr, "G", "out_of_range", $inat['out_of_range'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "D", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "D", "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "D", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "D", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "D", "comments_count", $inat['comments_count'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "num_identification_agreements", $inat['num_identification_agreements'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
+//  $factsArr = factsArrayPush($factsArr, "U", "identifications_most_agree", $inat['identifications_most_agree']);
+//  $factsArr = factsArrayPush($factsArr, "U", "identifications_most_disagree", $inat['identifications_most_disagree']);
+//  $factsArr = factsArrayPush($factsArr, "U", "observerActivityCount", $inat['user']['activity_count']); // This is problematic because it increases over time -> is affected by *when* the observation was fetched from iNat
+  $factsArr = factsArrayPush($factsArr, "U", "owners_identification_from_vision", $inat['owners_identification_from_vision'], FALSE);
+//  $factsArr = factsArrayPush($factsArr, "D", "", $inat(['']);
 
 
   // ----------------------------------------------------------------------------------------
@@ -279,7 +277,16 @@ function observationInat2Dw($inat) {
   // Handle temporary arrays 
   $dw['publicDocument']['keywords'] = $keywordsArr; // todo: or to unit level?
   $dw['publicDocument']['gatherings'][0]['notes'] = implode(" / ", $descArr);
-  $dw['publicDocument']['gatherings'][0]['units'][0]['facts'] = $factsArr;
+
+  if (!empty($factsArr['D'])) {
+    $dw['publicDocument']['facts'] = $factsArr['D'];
+  }
+  if (!empty($factsArr['G'])) {
+    $dw['publicDocument']['gatherings'][0]['facts'] = $factsArr['G'];
+  }
+  if (!empty($factsArr['U'])) {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['facts'] = $factsArr['U'];
+  }
 
 
   log2("SUCCESS", "handled observation\t" . $inat['id'], "log/inat-obs-log.log");
