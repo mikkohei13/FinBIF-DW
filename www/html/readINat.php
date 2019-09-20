@@ -68,9 +68,10 @@ $dwRoot['schema'] = "laji-etl";
 $dwRoot['roots'] = $dwObservations;
 
 // Send to API
+/*
 $apiResponse = postToAPI($dwRoot);
 log2("NOTICE", "API responded " . $apiResponse['code'], "log/inat-obs-log.log");
-
+*/
 
 print_r ($dwRoot); // debug
 print_r (json_encode($dwRoot)); // debug

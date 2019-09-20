@@ -30,7 +30,26 @@ function observationInat2Dw($inat) {
     - outgoing links (obs in inat, obs in gbif, photos in inat, sounds in inat)
   - What if a field is left empty? Is that ok, or should I avoid empty fields? (Note: the iNat JSON might have some elements missing, e.g. taxon is missing of there is not any identificationsor just a placeholder.)
   - All the todo's here mentioning Esko
-    
+
+  TODO:
+  - Esko tekee swagger-dokumentaation
+  - Media-url:it faktoina, mieti yleiskäyttöiset termit (TOinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url)
+  - date updated on document-tasolla, ks. esimerkki single-querysta
+  - Koordinaatit bounding boxilla, vaikka pistemäisiä. (Tai geojson, joka ei kuitenkaan tue piste+säde koordinaatteja.)
+  - Dokumentin id:ksi inat-url https:lla. Tarkista että GBIF:lla sama.
+  - Gatheringin ja unitin id:ksi documentID-G ja documentID-U
+  - Tieteellinen taksoninimi verbatim-kenttään.
+  - Verbatim-nimi faktaan
+  - no_sounds fakta pois
+  - no_images fakta pois
+  - havainnoija gathering.teamArray:hin
+  - havainnoijan inat-id kahteen kenttään: documentUserID's ja gatheringUsedID:hen, muodossa KE.[numero]:[inat-käyttäjänumero]
+  - observerOrcid faktaksi
+  - Lisenssikenttä toteutettu, ks. swagger
+
+  Notes:
+  - Samalla nimellä voi olla monta faktaa
+
   Ask iNat:
   How to have FinBIF here (not important, mostly curious...):
   This observation is featured on 1 site
