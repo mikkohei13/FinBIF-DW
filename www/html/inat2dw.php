@@ -33,12 +33,10 @@ function observationInat2Dw($inat) {
 
   TODO:
   - Esko tekee swagger-dokumentaation
-  - Faktat sille tasolle mille parhaiten sopivat, esim. created document-tasolle
   - Media-url:it faktoina, mieti yleiskäyttöiset termit
     - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
   - date updated on document-tasolla, ks. esimerkki single-querysta
   - Koordinaatit bounding boxilla, vaikka pistemäisiä. (Tai geojson, joka ei kuitenkaan tue piste+säde koordinaatteja.)
-  - Dokumentin id:ksi inat-url https:lla. Tarkista että GBIF:lla sama.
   - Gatheringin ja unitin id:ksi documentID-G ja documentID-U
   - havainnoija gathering.team Array of strings, etunimi sukunimi
   - havainnoijan inat-id kahteen kenttään: documentUserID's ja gatheringUsedID:hen, muodossa KE.[numero]:[inat-käyttäjänumero]
@@ -64,32 +62,33 @@ function observationInat2Dw($inat) {
     return FALSE;
   }
 
-//  echo "HERE GOES obs ".$inat['id'].":\n"; print_r ($inat); // debug ABBA
+//  echo "HERE GOES obs ".$inat['id'].":\n"; print_r ($inat); // debug
 
   // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
-  $dw['publicDocument']['collectionId'] = "http://tun.fi/HR.3211"; // todo: Esko: why collectionId twice?
-  $dw['sourceId'] = "http://tun.fi/HR.3211";
+  $dw['publicDocument']['collectionId'] = "http://tun.fi/HR.3211";
+  $dw['sourceId'] = "http://tun.fi/HR.3211"; // todo: or is this FinBIF-DW
   $dw['deleteRequest'] = FALSE;
   $dw['schema'] = "laji-etl";
   $dw['publicDocument']['secureLevel'] = "NONE";
   $dw['publicDocument']['concealment'] = "PUBLIC";
   $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "HUMAN_OBSERVATION_UNSPECIFIED";
-  $dw['publicDocument']['gatherings'][0]['units'][0]['typeSpecimen'] = false; // todo: esko: is this needed?
 
   $keywordsArr = Array();
   $descArr = Array();
   $factsArr = Array();
 
-
+  
   // Id's
-  $documentId = "http://tun.fi/HR.3211/" . $inat['id']; // todo: Esko: based on KE-identifier? 
+  $documentId = "https://www.inaturalist.org/observations/" . $inat['id']; // Note: GBIF also uses this as an occurrence ID  
   $dw['documentId'] = $documentId;
-  $dw['publicDocument']['documentId'] = $documentId; // todo: Esko: why documentId twice?
+  $dw['publicDocument']['documentId'] = $documentId;
+  $dw['publicDocument']['gatherings'][0]['gatheringId'] = $documentId . "-G";
+  $dw['publicDocument']['gatherings'][0]['units'][0]['unitId'] = $documentId . "-U";
 
-  $factsArr = factsArrayPush($factsArr, "D", "inaturalistId", $inat['id'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "D", "inaturalistUri", "https://www.inaturalist.org/observations/" . $inat['id'], TRUE);
-  array_push($keywordsArr, $inat['id']); // todo: Esko: is this the correct place?
+  $factsArr = factsArrayPush($factsArr, "D", "catalogueNumber", $inat['id'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "D", "referenceURL", "https://www.inaturalist.org/observations/" . $inat['id'], TRUE);
+  array_push($keywordsArr, $inat['id']);
 
 
   // Description
