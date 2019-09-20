@@ -5,44 +5,33 @@
 
 function observationInat2Dw($inat) {
 
+  try { // ABBA
+
   $dw = Array();
 
   /*
+  Example obs:
+  - without date and taxon: https://www.inaturalist.org/observations/30092946
   
   This expects that certain obserations are filtered out in the API call:
   - Non-Finnish. If this is exapanded to other countries, remove hard-coded country name. Also note that country name may be in any language or abbreviation (Finland, FI, Suomi...).
   - Observations without license
   - Captive/cultivated 
   - without_taxon_id: [human id] (todo: remove human filter here)
-
-  Decide:
-  - 
   
   Todo:
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
   - Filter mikkohei13 observations (will be duplicates, but have images...)
-
-  Ask Esko:
-  - Mitä jos vain taxon verbatim saatavilla? Käytetäänkö taksonina, jätetäänkö taksoni tyhjäksi, vai laitetaanko taksoniksi "biota"?
-  - Millainen document id pitää luoda? Mihin laitetaan alkuperäislähteen id? Tallennetaanko GBIF:n käyttämä id jonnekin, siltä varalta että dataa yhdistetään jossain vaiheessa? GBIF käyttää iNat urlia tunnisteena, nyt tämä faktassa.
-  - Is there field in DW for
-    - date updated?
-    - outgoing links (obs in inat, obs in gbif, photos in inat, sounds in inat)
-  - What if a field is left empty? Is that ok, or should I avoid empty fields? (Note: the iNat JSON might have some elements missing, e.g. taxon is missing of there is not any identificationsor just a placeholder.)
-  - All the todo's here mentioning Esko
-
-  TODO:
-  - Esko tekee swagger-dokumentaation
   - Media-url:it faktoina, mieti yleiskäyttöiset termit
     - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
-  - Lisenssikenttä toteutettu, document.licenceID = lisenssin finbif-URI, tai cc-uri
 
   Notes:
   - Samalla nimellä voi olla monta faktaa
+  - Kenttiä voi jättää tyhjiksi, se vain kasattaa json:in kokoa.
 
   Ask iNat:
-  How to have FinBIF here (not important, mostly curious...):
-  This observation is featured on 1 site
+  - How to have FinBIF here (not important, mostly curious...):
+  - This observation is featured on 1 site
 
   */
 
@@ -53,6 +42,10 @@ function observationInat2Dw($inat) {
   }
   if ("Homo sapiens" == $inat['taxon']['name']) {
     log2("NOTICE", "skipped observation of human(s)\t" . $inat['id'], "log/inat-obs-log.log");
+    return FALSE;
+  }
+  if (NULL == $inat['observed_on_details']) {
+    log2("NOTICE", "skipped observation without date\t" . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
 
@@ -71,6 +64,10 @@ function observationInat2Dw($inat) {
   $keywordsArr = Array();
   $descArr = Array();
   $factsArr = Array();
+
+
+  // Debug error handling
+//  $foo = $inat['foobar'];
 
 
   // Id's
@@ -261,7 +258,7 @@ function observationInat2Dw($inat) {
 
   // License URL's/URI's
   $dw['publicDocument']['licenseId'] = getLicenseUrl($inat['license_code']);
-  
+
   
   // Misc facts
   // todo: are all of these needed / valuable?
@@ -298,7 +295,16 @@ function observationInat2Dw($inat) {
   }
 
 
-  log2("SUCCESS", "handled observation\t" . $inat['id'], "log/inat-obs-log.log");
+  log2("SUCCESS", "handled observation\t" . $inat['id'] . " of " . $inat['taxon']['name'] . " at " . $inat['observed_on_details']['date'], "log/inat-obs-log.log");
   echo "handled ".$inat['id']."\n"; // debug
+
+
+  } // ABBA
+  catch (ErrorException $e) {
+    echo 'Caught exception: ',  $e->getMessage(), "\n";
+    log2("ERROR", "Caught exception on obs " . $inat['id'] . ": " . $e->getMessage(), "log/inat-error-log.log");
+  }
+
+
   return $dw;
 }

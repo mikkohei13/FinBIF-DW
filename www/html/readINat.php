@@ -1,4 +1,13 @@
 <?php
+set_error_handler(function($errno, $errstr, $errfile, $errline, $errcontext) {
+  // error was suppressed with the @-operator
+  if (0 === error_reporting()) {
+      return false;
+  }
+
+  throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
 require_once "inatHelpers.php";
 require_once "log2.php";
 require_once "inat2dw.php";
@@ -29,11 +38,15 @@ if (isset($_GET['debug'])) {
 }
 // PRODUCTION
 else {
-  $perPage = 5;
-  $pagesLimit = 1;
-  $sleepSecondsBetweenPages = 5; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
+
+  // See max 10k observations bug: https://github.com/inaturalist/iNaturalistAPI/issues/134
+
+  $perPage = 50;
+  $pagesLimit = 20;
+  $sleepSecondsBetweenPages = 10; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
   
-  $page = 1; // Start value
+  $page = 200; // Start value todo: this causes error
+  $page = 195; // Start value todo: this causes error
 
   $pagesLimit = $pagesLimit + $page;
   
@@ -74,8 +87,8 @@ $apiResponse = postToAPI($dwRoot);
 log2("NOTICE", "API responded " . $apiResponse['code'], "log/inat-obs-log.log");
 */
 
-print_r ($dwRoot); // debug
-print_r (json_encode($dwRoot)); // debug
+//print_r ($dwRoot); // debug
+//print_r (json_encode($dwRoot)); // debug
 
 
 
