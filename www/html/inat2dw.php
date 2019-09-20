@@ -5,8 +5,6 @@
 
 function observationInat2Dw($inat) {
 
-  try { // ABBA
-
   $dw = Array();
 
   /*
@@ -297,13 +295,6 @@ function observationInat2Dw($inat) {
 
   log2("SUCCESS", "handled observation\t" . $inat['id'] . " of " . $inat['taxon']['name'] . " at " . $inat['observed_on_details']['date'], "log/inat-obs-log.log");
   echo "handled ".$inat['id']."\n"; // debug
-
-
-  } // ABBA
-  catch (ErrorException $e) {
-    echo 'Caught exception: ',  $e->getMessage(), "\n";
-    log2("ERROR", "Caught exception on obs " . $inat['id'] . ": " . $e->getMessage(), "log/inat-error-log.log");
-  }
 
 
   return $dw;

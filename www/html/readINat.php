@@ -1,12 +1,4 @@
 <?php
-set_error_handler(function($errno, $errstr, $errfile, $errline, $errcontext) {
-  // error was suppressed with the @-operator
-  if (0 === error_reporting()) {
-      return false;
-  }
-
-  throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-});
 
 require_once "inatHelpers.php";
 require_once "log2.php";
@@ -41,8 +33,8 @@ else {
 
   // See max 10k observations bug: https://github.com/inaturalist/iNaturalistAPI/issues/134
 
-  $perPage = 50;
-  $pagesLimit = 20;
+  $perPage = 10;
+  $pagesLimit = 1;
   $sleepSecondsBetweenPages = 10; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
   
   $page = 200; // Start value todo: this causes error
