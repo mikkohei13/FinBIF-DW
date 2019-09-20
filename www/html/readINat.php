@@ -34,11 +34,40 @@ else {
   // See max 10k observations bug: https://github.com/inaturalist/iNaturalistAPI/issues/134
 
   $perPage = 10;
-  $pagesLimit = 1;
-  $sleepSecondsBetweenPages = 10; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
+  $getLimit = 2;
+  $idAbove = 0; // Start value
+  $idAbove = 33084315;
+
+  $i = 1;
+
+  // Per get
+  while ($i <= $getLimit) {
+
+    $observationsJson = getObservationsJson($idAbove, $perPage);
+    $data = json_decode($observationsJson, TRUE);
+
+    if (0 === $data['total_results']) {
+      log2("NOTICE", "No more results from API with idAbove " . $idAbove, "log/inat-obs-log.log");
+      break;
+    }
+
+    // Per observation
+    foreach ($data['results'] as $nro => $obs) {
+//      print_r (obs);
+      echo $obs['id'] . "\n";
+      $idAbove = $obs['id'];
+//      $dwObservations[] = observationInat2Dw($obs);
+    }
+
+    $i++;
+  }
+
+  /*
+  $perPage = 10;
+  $pagesLimit = 2;
+  $sleepSecondsBetweenPages = 2; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
   
-  $page = 200; // Start value todo: this causes error
-  $page = 195; // Start value todo: this causes error
+  $page = 1;
 
   $pagesLimit = $pagesLimit + $page;
   
@@ -47,15 +76,13 @@ else {
     $observationsJson = getObservationsJson($page, $perPage);
     $data = json_decode($observationsJson, TRUE);
   
-    /*
-    $meta['totalResults'] = $data['total_results']; 
-    $meta['page'] = $data['page'];
-    $meta['perPage'] = $data['per_page'];
-    $meta['pagesTotal'] = ceil($meta['totalResults'] / $meta['perPage']);
-    $meta['pagesToGo'] = $meta['pagesTotal'] - $meta['page'];
+//    $meta['totalResults'] = $data['total_results']; 
+//    $meta['page'] = $data['page'];
+//    $meta['perPage'] = $data['per_page'];
+//    $meta['pagesTotal'] = ceil($meta['totalResults'] / $meta['perPage']);
+//    $meta['pagesToGo'] = $meta['pagesTotal'] - $meta['page'];
     
     //print_r ($meta);
-    */
   
     // Per observation
     // Convert from iNat to DW format
@@ -66,6 +93,7 @@ else {
     $page++;
     sleep($sleepSecondsBetweenPages);
   }  
+  */
 }
 
 // Compile json file to be sent
@@ -90,12 +118,16 @@ log2("NOTICE", "finished", "log/inat-obs-log.log");
 //--------------------------------------------------------------------------
 
 
-function getObservationsJson($page, $perPage) {
+function getObservationsJson($idAbove, $perPage) {
 
-  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=" . $page . "&per_page=" . $perPage . "&order=desc&order_by=created_at";
+//  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=" . $page . "&per_page=" . $perPage . "&order=desc&order_by=created_at"; // original
+
+  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove; // new, to avoid pagination bug
+
+  echo $url . "\n"; // debug
 
   $observationsJson = file_get_contents($url);
-  log2("NOTICE", "fetched page $page", "log/inat-obs-log.log");
+  log2("NOTICE", "Fetched $perPage obs starting from $idAbove", "log/inat-obs-log.log");
 
   //echo $json;
 
