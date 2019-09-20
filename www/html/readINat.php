@@ -2,41 +2,12 @@
 require_once "inatHelpers.php";
 require_once "log2.php";
 require_once "inat2dw.php";
+require_once "postToAPI.php";
 
 // todo: log errors locally, so that I know if some field is missing or something unexpected
+// todo try catch for conversion?
 
 echo "<pre>";
-
-// ------------------------------------------------------------------------------------------------
-// DEBUG GET URL's
-
-if (isset($_GET['obs_id'])) {
-  $url = "http://api.inaturalist.org/v1/observations/" . $_GET['obs_id'] . "?include_new_projects=true";
-}
-else {
-  // Finnish, CC, wild
-  // 10 per page, page 1
-  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=10&order=desc&order_by=created_at";
-
-  // Koivunpunikkitatti, testihavainto joss projekti ja tageja
-  // Onko datamalli sama kuin observations-haussa?
-  $url = "http://api.inaturalist.org/v1/observations/32469823?include_new_projects=true";
-
-  // Silokka, 2 kuvaa
-  $url = "http://api.inaturalist.org/v1/observations/32325167?include_new_projects=true";
-
-  // Danaus chrysippus, 5 id's, charset issue in tags field
-  // project_observations, annotations
-  $url = "http://api.inaturalist.org/v1/observations/20830621?include_new_projects=true";
-
-  // Spam
-  $url = "http://api.inaturalist.org/v1/observations/32589022?include_new_projects=true";
-
-  // Maveric Anser
-  $url = "http://api.inaturalist.org/v1/observations/17937851?include_new_projects=true";
-}
-
-
 
 // ------------------------------------------------------------------------------------------------
 
@@ -57,11 +28,11 @@ if (isset($_GET['debug'])) {
 }
 // PRODUCTION
 else {
-  $perPage = 50;
-  $pagesLimit = 10;
+  $perPage = 5;
+  $pagesLimit = 1;
   $sleepSecondsBetweenPages = 5; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
   
-  $page = 10; // Start value
+  $page = 1; // Start value
 
   $pagesLimit = $pagesLimit + $page;
   
@@ -81,6 +52,7 @@ else {
     */
   
     // Per observation
+    // Convert from iNat to DW format
     foreach ($data['results']  as $nro => $obs) {
       $dwObservations[] = observationInat2Dw($obs);
     }
@@ -95,12 +67,18 @@ $dwRoot = Array();
 $dwRoot['schema'] = "laji-etl";
 $dwRoot['roots'] = $dwObservations;
 
-print_r ($dwRoot);
-print_r (json_encode($dwRoot));
+// Send to API
+$apiResponse = postToAPI($dwRoot);
+log2("NOTICE", "API responded " . $apiResponse['code'], "log/inat-obs-log.log");
+
+
+print_r ($dwRoot); // debug
+print_r (json_encode($dwRoot)); // debug
+
+
+
 
 log2("NOTICE", "finished", "log/inat-obs-log.log");
-
-
 
 //--------------------------------------------------------------------------
 

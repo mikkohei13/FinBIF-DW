@@ -21,13 +21,12 @@ $responseCode = 200;
 
 if (isset($_GET['DEBUG'])) {
   // Test
-  $data['sourceId'] = "This data comes from test API. ";
-  $data['documents'] = "Documents shall go here.";
+  $data = json_encode("This data comes from test API. ");
 }
 else {
   // POST
-  $data['sourceId'] = $_POST['sourceId'];
-  $data['documents'] = $_POST['documents'];
+  // ABBA: get all from POST
+  $data = $_POST;
 }
 
 

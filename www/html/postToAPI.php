@@ -1,6 +1,15 @@
 <?php
 
-function postToAPI($data) {
+require_once "_secrets.php";
+
+function postToAPItest($data) {
+  
+  $apiURL = "https://apitest.laji.fi/v0/warehouse/push?access_token=" . $apitest_access_token;
+}
+
+
+// MOCKUP
+function postToMockAPI($data) {
   /*
   // Expects data in format:
 
