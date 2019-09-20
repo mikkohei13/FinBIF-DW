@@ -33,7 +33,9 @@ function observationInat2Dw($inat) {
 
   TODO:
   - Esko tekee swagger-dokumentaation
-  - Media-url:it faktoina, mieti yleiskäyttöiset termit (TOinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url)
+  - Faktat sille tasolle mille parhaiten sopivat, esim. created document-tasolle
+  - Media-url:it faktoina, mieti yleiskäyttöiset termit
+    - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
   - date updated on document-tasolla, ks. esimerkki single-querysta
   - Koordinaatit bounding boxilla, vaikka pistemäisiä. (Tai geojson, joka ei kuitenkaan tue piste+säde koordinaatteja.)
   - Dokumentin id:ksi inat-url https:lla. Tarkista että GBIF:lla sama.
@@ -42,10 +44,10 @@ function observationInat2Dw($inat) {
   - Verbatim-nimi faktaan
   - no_sounds fakta pois
   - no_images fakta pois
-  - havainnoija gathering.teamArray:hin
+  - havainnoija gathering.team Array of strings, etunimi sukunimi
   - havainnoijan inat-id kahteen kenttään: documentUserID's ja gatheringUsedID:hen, muodossa KE.[numero]:[inat-käyttäjänumero]
   - observerOrcid faktaksi
-  - Lisenssikenttä toteutettu, ks. swagger
+  - Lisenssikenttä toteutettu, document.licenceID = lisenssin finbif-URI, tai cc-uri
 
   Notes:
   - Samalla nimellä voi olla monta faktaa
