@@ -35,10 +35,6 @@ function observationInat2Dw($inat) {
   - Esko tekee swagger-dokumentaation
   - Media-url:it faktoina, mieti yleiskäyttöiset termit
     - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
-  - date updated on document-tasolla, ks. esimerkki single-querysta
-  - havainnoija gathering.team Array of strings, etunimi sukunimi
-  - havainnoijan inat-id kahteen kenttään: documentUserID's ja gatheringUsedID:hen, muodossa KE.[numero]:[inat-käyttäjänumero]
-  - observerOrcid faktaksi
   - Lisenssikenttä toteutettu, document.licenceID = lisenssin finbif-URI, tai cc-uri
 
   Notes:
@@ -85,7 +81,7 @@ function observationInat2Dw($inat) {
   $dw['publicDocument']['gatherings'][0]['units'][0]['unitId'] = $documentId . "-U";
 
   $factsArr = factsArrayPush($factsArr, "D", "catalogueNumber", $inat['id'], TRUE);
-  $factsArr = factsArrayPush($factsArr, "D", "referenceURL", "https://www.inaturalist.org/observations/" . $inat['id'], TRUE);
+  $factsArr = factsArrayPush($factsArr, "D", "referenceURI", $inat['uri'], TRUE);
   array_push($keywordsArr, $inat['id']);
 
 
@@ -105,6 +101,7 @@ function observationInat2Dw($inat) {
     }
   }
 
+
   // Projects
   // todo: do we need to store whether the project is trad/non-trad? Do they share identifier namespace?
   // Non-traditional / Collection (automatic)
@@ -123,11 +120,13 @@ function observationInat2Dw($inat) {
     }
   }
 
+
   // Dates
   $dw['createdDate'] = $inat['created_at_details']['date'];
   $dw['eventDate']['begin'] = removeNullFalse($inat['observed_on_details']['date']);
 
-  $factsArr = factsArrayPush($factsArr, "D", "observedOrCreatedAt", $inat['time_observed_at']);
+  $factsArr = factsArrayPush($factsArr, "D", "observedOrCreatedAt", $inat['time_observed_at']); // This is usually datetime observed (taken from image or app), but sometimes datetime created
+
 
   // Coordinates
   if ($inat['mappable']) {
@@ -155,6 +154,7 @@ function observationInat2Dw($inat) {
     $dw['publicDocument']['gatherings'][0]['coordinates']['latMin'] = $lat;
     $dw['publicDocument']['gatherings'][0]['coordinates']['latMax'] = $lat;
   }
+
 
   // Locality
   $locality = stringReverse($inat['place_guess']);
@@ -222,6 +222,7 @@ function observationInat2Dw($inat) {
     }
   }
 
+
   // Taxon
   $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['taxon']['name']);
   $factsArr = factsArrayPush($factsArr, "U", "taxonVerbatim", handleTaxon($inat['species_guess']));
@@ -232,10 +233,36 @@ function observationInat2Dw($inat) {
     $factsArr = factsArrayPush($factsArr, "U", $ofvs['name_ci'], $ofvs['value_ci'], TRUE); // This must preserve zero values
   }
 
+  // Observer name
+  // Prefer full name over loginname
+  if (isset($inat['user']['name'])) {
+    $observer = $inat['user']['name'];
+  }
+  else {
+    $observer = $inat['user']['login'];
+  }
+  $dw['publicDocument']['gatherings'][0]['team'][0] = $observer;
+
+  // Editor & observer id
+  $userId = "KE.901:" . $inat['user']['id'];
+  $dw['publicDocument']['editorUserIds'][0] = $userId;
+  $dw['publicDocument']['gatherings'][0]['observerUserIds'][0] = $userId;
+
+  // Orcid
+  if (!empty($inat['user']['orcid'])) {
+    $factsArr = factsArrayPush($factsArr, "D", "observerOrcid", $inat['user']['orcid'], FALSE);
+  }
+
+
   // Quality grade
   $factsArr = factsArrayPush($factsArr, "D", "quality_grade", $inat['quality_grade']);
   array_push($keywordsArr, $inat['quality_grade']);
 
+
+  // License URL's/URI's
+  $dw['publicDocument']['licenseId'] = getLicenseUrl($inat['license_code']);
+  
+  
   // Misc facts
   // todo: are all of these needed / valuable?
   $factsArr = factsArrayPush($factsArr, "G", "out_of_range", $inat['out_of_range'], FALSE);
@@ -252,29 +279,6 @@ function observationInat2Dw($inat) {
   $factsArr = factsArrayPush($factsArr, "U", "owners_identification_from_vision", $inat['owners_identification_from_vision'], FALSE);
 //  $factsArr = factsArrayPush($factsArr, "D", "", $inat(['']);
 
-
-  // ----------------------------------------------------------------------------------------
-
-  // TODO: FIELDS TODO TO DW or MISSING FROM EXAMPLE
-
-  // Observer
-  // Prefer full name over loginname
-  if (isset($inat['user']['name'])) {
-    $observer = $inat['user']['name'];
-  }
-  else {
-    $observer = $inat['user']['login'];
-  }
-  $dw['publicDocument']['gatherings'][0]['team'][0] = $observer;
-
-  $dw['observerId'] = "inaturalist:" . $inat['user']['id'];
-  if (!empty($inat['user']['orcid'])) {
-    $dw['observerOrcid'] = $inat['user']['orcid'];
-  }
-
-
-  $dw['license'] = $inat['license_code'];
-  $dw['url'] = $inat['uri'];
 
 
   // ----------------------------------------------------------------------------------------

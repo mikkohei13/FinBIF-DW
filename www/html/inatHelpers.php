@@ -105,6 +105,8 @@ function handleAnnotation($annotation) {
     See more at https://forum.inaturalist.org/t/how-to-use-inaturalists-search-urls-wiki/63
 
   */
+
+  // Mapping for facts
   $annoAttributeMap[1] = "LifeStage";
   $annoAttributeMap[9] = "Sex";
   $annoAttributeMap[12] = "PlantPhenology";
@@ -127,6 +129,7 @@ function handleAnnotation($annotation) {
   $ret['attribute'] = $annoAttributeMap[$annotation['controlled_attribute_id']];
   $ret['value'] = $annoValueMap[$annotation['controlled_value_id']];
 
+  // Mapping for native variables
   switch ($annotation['controlled_value_id']) {
     case 2:
       $ret['dwLifeStage'] = "ADULT";
@@ -165,17 +168,32 @@ function handleAnnotation($annotation) {
   return $ret;
 }
 
-/*
-$projectKeywords = inatProjects2keywords($inat['non_traditional_projects']);
-
-function inatProjects2keywords($projects) {
-  foreach ($projects as $nro => $project) {
-    $project['project_id'];
+function getLicenseUrl($licenseCode) {
+  switch ($licenseCode) {
+    case "cc0":
+      $ret = "https://creativecommons.org/publicdomain/zero/1.0/";
+      break;
+    case "cc-by":
+      $ret = "https://creativecommons.org/licenses/by/4.0/";
+      break;
+    case "cc-by-nc":
+      $ret = "https://creativecommons.org/licenses/by-nc/4.0/";
+      break;
+    case "cc-by-nd":
+      $ret = "https://creativecommons.org/licenses/by-nd/4.0/";
+      break;
+    case "cc-by-sa":
+      $ret = "https://creativecommons.org/licenses/by-sa/4.0/";
+      break;
+    case "cc-by-nc-nd":
+      $ret = "https://creativecommons.org/licenses/by-nc-nd/4.0/";
+      break;
+    case "cc-by-nc-sa":
+      $ret = "https://creativecommons.org/licenses/by-nc-sa/4.0/";
+      break;
+    default:
+      $ret = "https://creativecommons.org/licenses/by-nc-nd/4.0/"; // Strictest license
+      break;
   }
-  $url = "";
-  $json = file_get_contents($url);
-  $data = json_decode($json, TRUE);
-  print_r ($data);
+  return $ret;
 }
-
-*/

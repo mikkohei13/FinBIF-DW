@@ -16,8 +16,9 @@ $dwObservations = Array();
 
 // DEBUG
 if (isset($_GET['debug'])) {
-//  $url = "http://api.inaturalist.org/v1/observations/" . $_GET['debug'] . "?include_new_projects=true"; // single
   $url = "https://api.inaturalist.org/v1/observations?id=" . $_GET['debug'] . "&order=desc&order_by=created_at&include_new_projects=true"; // multi
+  echo $url . "\n";
+
   log2("DEBUG", "fetched url $url", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
