@@ -176,32 +176,26 @@ function observationInat2Dw($inat) {
 
 
   // Photos
-  $photoCount = count($inat['observation_photos']); // todo: does this fail
+  $photoCount = count($inat['observation_photos']);
   if ($photoCount >= 1) {
     array_push($keywordsArr, "has_photos");
     foreach ($inat['observation_photos'] as $photoNro => $photo) {
       $factsArr = factsArrayPush($factsArr, "photoId", $photo['photo']['id']);
     }
+    $factsArr = factsArrayPush($factsArr, "photoCount", $photoCount);
   }
-  else {
-    array_push($keywordsArr, "no_photos");
-  }
-  $factsArr = factsArrayPush($factsArr, "photoCount", $photoCount);
 
 
   // Sounds
-  $soundCount = count($inat['sounds']); // todo: does this fail
+  $soundCount = count($inat['sounds']);
   if ($soundCount >= 1) {
     array_push($keywordsArr, "has_sounds");
     foreach ($inat['sounds'] as $soundNro => $sound) {
       $factsArr = factsArrayPush($factsArr, "soundId", $sound['id']);
       array_push($descArr, "sound file: " . $sound['file_url']); // todo: esko: where this to? outgoing links, urls, description field? Do the same for photos, if they have static urls?
     }
+    $factsArr = factsArrayPush($factsArr, "soundCount", $soundCount);
   }
-  else {
-    array_push($keywordsArr, "no_sounds");
-  }
-  $factsArr = factsArrayPush($factsArr, "soundCount", $soundCount);
 
 
   // Tags
