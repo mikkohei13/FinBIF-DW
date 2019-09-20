@@ -42,8 +42,6 @@ function observationInat2Dw($inat) {
   - Gatheringin ja unitin id:ksi documentID-G ja documentID-U
   - Tieteellinen taksoninimi verbatim-kenttään.
   - Verbatim-nimi faktaan
-  - no_sounds fakta pois
-  - no_images fakta pois
   - havainnoija gathering.team Array of strings, etunimi sukunimi
   - havainnoijan inat-id kahteen kenttään: documentUserID's ja gatheringUsedID:hen, muodossa KE.[numero]:[inat-käyttäjänumero]
   - observerOrcid faktaksi
@@ -223,8 +221,8 @@ function observationInat2Dw($inat) {
   }
 
   // Taxon
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['species_guess']); // todo: keep this? This can(?) be in any language, unclear what is based on - seems often be dependent on the language of the latest identifier.
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxon'] = handleTaxon($inat['taxon']['name']); // todo: esko: this is the real taxon, where to put this?
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['taxon']['name']);
+  $factsArr = factsArrayPush($factsArr, "taxonVerbatim", handleTaxon($inat['species_guess']));
 
 
   // Observations fields
