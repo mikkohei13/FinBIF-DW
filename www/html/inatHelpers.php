@@ -126,34 +126,34 @@ function handleAnnotation($annotation) {
 
   switch ($annotation['controlled_value_id']) {
     case 2:
-      $ret['dwLifeStage'] = "MY.lifeStageAdult";
+      $ret['dwLifeStage'] = "ADULT";
       break;
     case 4:
-      $ret['dwLifeStage'] = "MY.lifeStagePupa";
+      $ret['dwLifeStage'] = "PUPA";
       break;
     case 5:
-      $ret['dwLifeStage'] = "MY.lifeStageNymph";
+      $ret['dwLifeStage'] = "NYMPH";
       break;
     case 6:
-      $ret['dwLifeStage'] = "MY.lifeStageLarva";
+      $ret['dwLifeStage'] = "LARVA";
       break;
     case 7:
-      $ret['dwLifeStage'] = "MY.lifeStageEgg";
+      $ret['dwLifeStage'] = "EGG";
       break;
     case 8:
-      $ret['dwLifeStage'] = "MY.lifeStageJuvenile";
+      $ret['dwLifeStage'] = "JUVENILE";
       break;
     case 16:
-      $ret['dwLifeStage'] = "MY.lifeStageSubimago";
+      $ret['dwLifeStage'] = "SUBIMAGO";
       break;
     case 13:
-      $ret['dwLifeStage'] = "MY.plantLifeStageFlower";
+      $ret['dwLifeStage'] = "FLOWER";
       break;
     case 10:
-      $ret['dwSex'] = "MY.sexF";
+      $ret['dwSex'] = "FEMALE";
       break;
     case 11:
-      $ret['dwSex'] = "MY.sexM";
+      $ret['dwSex'] = "MALE";
       break;
     default:
       break;
