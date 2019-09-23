@@ -22,10 +22,11 @@ function observationInat2Dw($inat) {
   - Filter mikkohei13 observations (will be duplicates, but have images...)
   - Media-url:it faktoina, mieti yleiskäyttöiset termit
     - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
-
+  - Edited date? yyyy-mm-dd
   Notes:
   - Samalla nimellä voi olla monta faktaa
   - Kenttiä voi jättää tyhjiksi, se vain kasattaa json:in kokoa.
+  - Enum-arvot ovat all-caps
 
   Ask iNat:
   - How to have FinBIF here (not important, mostly curious...):
@@ -52,7 +53,7 @@ function observationInat2Dw($inat) {
   // Data shared by all observations
   $dw['collectionId'] = "http://tun.fi/HR.3211";
   $dw['publicDocument']['collectionId'] = "http://tun.fi/HR.3211";
-  $dw['sourceId'] = "http://tun.fi/HR.3211"; // todo: or is this FinBIF-DW
+  $dw['sourceId'] = "http://tun.fi/KE.901";
   $dw['deleteRequest'] = FALSE;
   $dw['schema'] = "laji-etl";
   $dw['publicDocument']['secureLevel'] = "NONE";
@@ -79,7 +80,7 @@ function observationInat2Dw($inat) {
 
   $factsArr = factsArrayPush($factsArr, "D", "catalogueNumber", $inat['id'], TRUE);
   $factsArr = factsArrayPush($factsArr, "D", "referenceURI", $inat['uri'], TRUE);
-  array_push($keywordsArr, $inat['id']);
+  array_push($keywordsArr, strval($inat['id'])); // id has to be string
 
 
   // Description
@@ -128,7 +129,7 @@ function observationInat2Dw($inat) {
   // Coordinates
   if ($inat['mappable']) {
     // Coordinate accuracy
-    $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "wgs84";
+    $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "WGS84";
 
     if (empty($inat['positional_accuracy'])) {
       $accuracy = 1000; // Default for missing values
@@ -189,7 +190,7 @@ function observationInat2Dw($inat) {
     array_push($keywordsArr, "has_sounds");
     foreach ($inat['sounds'] as $soundNro => $sound) {
       $factsArr = factsArrayPush($factsArr, "U", "soundId", $sound['id']);
-      array_push($descArr, "sound file: " . $sound['file_url']); // todo: esko: where this to? outgoing links, urls, description field? Do the same for photos, if they have static urls?
+      array_push($descArr, "sound file: " . $sound['file_url']);
     }
     $factsArr = factsArrayPush($factsArr, "U", "soundCount", $soundCount);
   }
@@ -209,7 +210,6 @@ function observationInat2Dw($inat) {
       $anno = handleAnnotation($annotation);
       $factsArr = factsArrayPush($factsArr, "U", $anno['attribute'], $anno['value']);
       
-      // todo: esko: is sex ok here? values?
       if (isset($anno['dwLifeStage'])) {
         $dw['publicDocument']['gatherings'][0]['units'][0]['lifeStage'] = $anno['dwLifeStage'];
       }
@@ -261,7 +261,6 @@ function observationInat2Dw($inat) {
 
   
   // Misc facts
-  // todo: are all of these needed / valuable?
   $factsArr = factsArrayPush($factsArr, "G", "out_of_range", $inat['out_of_range'], FALSE);
   $factsArr = factsArrayPush($factsArr, "D", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
   $factsArr = factsArrayPush($factsArr, "D", "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
@@ -281,7 +280,7 @@ function observationInat2Dw($inat) {
   // ----------------------------------------------------------------------------------------
 
   // Handle temporary arrays 
-  $dw['publicDocument']['keywords'] = $keywordsArr; // todo: or to unit level?
+  $dw['publicDocument']['keywords'] = $keywordsArr;
   $dw['publicDocument']['gatherings'][0]['notes'] = implode(" / ", $descArr);
 
   if (!empty($factsArr['D'])) {
