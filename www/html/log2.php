@@ -1,5 +1,6 @@
 <?php
 
+// Note: this is temporarily copied to mysql class.
 function log2($type, $message, $filename = "log/log.txt") {
   $message = date("Y-m-d H:i:s") . "\t" . $type . "\t" . $message . "\n";
 

@@ -7,10 +7,10 @@ require_once "mysql.php";
 require_once "_secrets.php";
 require_once "postToAPI.php";
 
-
-$database = new mysqlDb();
-$database->connect("inat_push"); // todo: prod, test
-
+$database = new mysqlDb("inat_push");
+if (!$database) {
+  exit("Exited due to database connection error");
+}
 
 // todo: log errors locally, so that I know if some field is missing or something unexpected
 // todo try catch for conversion?

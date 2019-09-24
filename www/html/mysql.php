@@ -8,6 +8,29 @@ class mysqlDb
     public $conn = FALSE;
     public $error = FALSE;
 
+    public function __construct($database) {
+        return $this->connect($database);
+    }
+
+/*
+    // Wrapper functions which allows the object to work without a logger, if not set
+    private function log2($type, $message, $filename) {
+        if ($this->logger) {
+            $this->logger($type, $message, $filename);
+            return TRUE;
+        }
+        return FALSE; // If no logger set
+    }
+*/
+
+    // Note: this is temporarily copied to mysql class.
+    private function log2($type, $message, $filename = "log/log.txt") {
+        $message = date("Y-m-d H:i:s") . "\t" . $type . "\t" . $message . "\n";
+    
+        $bytes = file_put_contents($filename, $message, FILE_APPEND);
+        return $bytes;
+    }
+
     public function connect($database) {
         $server = "mysql";
         $user = "root";
@@ -17,9 +40,11 @@ class mysqlDb
 
         if ($this->conn->connect_error) {
             $this->error = "Database connection failed: " . $this->conn->connect_error;
+            $this->log2("ERROR", "Database connection failed: " . $database, "log/inat-obs-log.log"); 
             return FALSE;
         }
         else {
+            $this->log2("NOTICE", "Connected to database: " . $database, "log/inat-obs-log.log"); 
             return TRUE;
         }
     }
