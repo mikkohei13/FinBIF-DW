@@ -18,18 +18,22 @@ function observationInat2Dw($inat) {
   - without_taxon_id: [human id] (todo: remove human filter here)
   
   Todo:
+  - Decide what to do with unit and gathering id's. Gut feeling (24.9.2019: Create a new, since iNat has not officially declared that the uri is an identifier. GBIF just acts like it is.)
   - Check that all fields are shown on dw
   - Check that all non-meta data is under public document
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
-  - License
   - Filter mikkohei13 observations (will be duplicates, but have images...)
-  - Media-url:it faktoina, mieti yleiskäyttöiset termit
-    - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
   - Edited date? yyyy-mm-dd
+
+  Ask Esko:
+  - Showing license uri on viewer, list, file download?
+
   Notes:
   - Samalla nimellä voi olla monta faktaa
+  - Faktat ovat stringejä
   - Kenttiä voi jättää tyhjiksi, se vain kasattaa json:in kokoa.
   - Enum-arvot ovat all-caps
+  - Ei käytä media-objektia, koska kuviin viittaaminen kuitenkin ylittäisi api-limiitin
 
   Ask iNat:
   - How to have FinBIF here (not important, mostly curious...):
@@ -124,7 +128,10 @@ function observationInat2Dw($inat) {
 
 
   // Dates
-  $dw['createdDate'] = $inat['created_at_details']['date']; // todo: public documentin alle??
+  $dw['publicDocument']['createdDate'] = $inat['created_at_details']['date']; // todo: esko: onko tämä oikea taso?
+  $updatedDatePieces = explode("T", $inat['updated_at']);
+  $dw['publicDocument']['modifiedDate'] = $updatedDatePieces[0]; // todo: esko: onko tämä oikea taso?
+
   $dw['publicDocument']['gatherings'][0]['eventDate']['begin'] = removeNullFalse($inat['observed_on_details']['date']);
   $dw['publicDocument']['gatherings'][0]['eventDate']['end'] = $dw['publicDocument']['gatherings'][0]['eventDate']['begin']; // End is same as beginning
 
@@ -181,23 +188,24 @@ function observationInat2Dw($inat) {
   // Photos
   $photoCount = count($inat['observation_photos']);
   if ($photoCount >= 1) {
-    array_push($keywordsArr, "has_photos");
+    array_push($keywordsArr, "has_images"); // not needed if we use media object
     foreach ($inat['observation_photos'] as $photoNro => $photo) {
-      $factsArr = factsArrayPush($factsArr, "U", "photoId", $photo['photo']['id']);
+      $factsArr = factsArrayPush($factsArr, "U", "imageId", $photo['photo']['id']); // Photo id
+      $factsArr = factsArrayPush($factsArr, "U", "imageUrl", "https://www.inaturalist.org/photos/" . $photo['photo']['id']); // Photo link
     }
-    $factsArr = factsArrayPush($factsArr, "U", "photoCount", $photoCount);
+    $factsArr = factsArrayPush($factsArr, "U", "imageCount", $photoCount);
   }
 
 
   // Sounds
   $soundCount = count($inat['sounds']);
   if ($soundCount >= 1) {
-    array_push($keywordsArr, "has_sounds");
+    array_push($keywordsArr, "has_audio"); // not needed if we use media object
     foreach ($inat['sounds'] as $soundNro => $sound) {
-      $factsArr = factsArrayPush($factsArr, "U", "soundId", $sound['id']);
-      array_push($descArr, "sound file: " . $sound['file_url']);
+      $factsArr = factsArrayPush($factsArr, "U", "audioId", $sound['id']); // Sound id
+      $factsArr = factsArrayPush($factsArr, "U", "audioUrl", $sound['file_url']); // Sound link
     }
-    $factsArr = factsArrayPush($factsArr, "U", "soundCount", $soundCount);
+    $factsArr = factsArrayPush($factsArr, "U", "audioCount", $soundCount);
   }
 
 
