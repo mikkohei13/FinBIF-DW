@@ -32,7 +32,7 @@ function factsArrayPush($factsArr, $level, $fact, $value, $preserveZeroAndFalse 
   
   $newArr = Array();
   $newArr['fact'] = preg_replace('/[^\w]/', '', $fact); // Remove spaces, special chars etc. from fact names. Does this handle all cases? Seems to allow _ but not ÅÄÖåäö-".,;:
-  $newArr['value'] = $value;
+  $newArr['value'] = strval($value); // Must be always string
 
   $factsArr[$level][] = $newArr;
   return $factsArr;

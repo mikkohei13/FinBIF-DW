@@ -18,6 +18,8 @@ function observationInat2Dw($inat) {
   - without_taxon_id: [human id] (todo: remove human filter here)
   
   Todo:
+  - Check that all fields are shown on dw
+  - Check that all non-meta data is under public document
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
   - License
   - Filter mikkohei13 observations (will be duplicates, but have images...)
@@ -122,8 +124,9 @@ function observationInat2Dw($inat) {
 
 
   // Dates
-  $dw['createdDate'] = $inat['created_at_details']['date'];
-  $dw['eventDate']['begin'] = removeNullFalse($inat['observed_on_details']['date']);
+  $dw['createdDate'] = $inat['created_at_details']['date']; // todo: public documentin alle??
+  $dw['publicDocument']['gatherings'][0]['eventDate']['begin'] = removeNullFalse($inat['observed_on_details']['date']);
+  $dw['publicDocument']['gatherings'][0]['eventDate']['end'] = $dw['publicDocument']['gatherings'][0]['eventDate']['begin']; // End is same as beginning
 
   $factsArr = factsArrayPush($factsArr, "D", "observedOrCreatedAt", $inat['time_observed_at']); // This is usually datetime observed (taken from image or app), but sometimes datetime created
 
@@ -255,7 +258,7 @@ function observationInat2Dw($inat) {
 
   // Quality grade
   $factsArr = factsArrayPush($factsArr, "D", "quality_grade", $inat['quality_grade']);
-  array_push($keywordsArr, $inat['quality_grade']);
+  array_push($keywordsArr, $inat['quality_grade'] . "_grade");
 
 
   // License URL's/URI's
