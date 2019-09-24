@@ -19,6 +19,7 @@ function observationInat2Dw($inat) {
   
   Todo:
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
+  - License
   - Filter mikkohei13 observations (will be duplicates, but have images...)
   - Media-url:it faktoina, mieti yleiskäyttöiset termit
     - (Toinen vaihtoehto on käytää mediaobjektia, jossa ml. lisenssi ja thumbnail-kuvan url) https://bitbucket.org/luomus/laji-etl/src/master/WEB-INF/src/main/fi/laji/datawarehouse/etl/models/dw/MediaObject.java
@@ -51,8 +52,9 @@ function observationInat2Dw($inat) {
 //  echo "HERE GOES obs ".$inat['id'].":\n"; print_r ($inat); // debug
 
   // Data shared by all observations
-  $dw['collectionId'] = "http://tun.fi/HR.3211";
-  $dw['publicDocument']['collectionId'] = "http://tun.fi/HR.3211";
+  $collectionId = "http://tun.fi/HR.3211"; // Prod: HR.3211 Test: HR.11146
+  $dw['collectionId'] = $collectionId;
+  $dw['publicDocument']['collectionId'] = $collectionId;
   $dw['sourceId'] = "http://tun.fi/KE.901";
   $dw['deleteRequest'] = FALSE;
   $dw['schema'] = "laji-etl";
