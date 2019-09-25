@@ -7,6 +7,9 @@ require_once "mysql.php";
 require_once "_secrets.php";
 require_once "postToAPI.php";
 
+echo "START\n";
+log2("START", "------------------------------------------", "log/inat-obs-log.log");
+
 $database = new mysqlDb("inat_push");
 if (!$database) {
   exit("Exited due to database connection error");
@@ -30,6 +33,8 @@ key = 33084315; // Violettiseitikki submitted on 20.9.2019
 
 TODO:
 - See push plan in readme
+- Plan options and logic for fullUpload, latestUpload, fullUpdate, delete
+- FIND OUT WHY ID 33068 PERSISTS?!
 - Check that all exit's have logging
 - Add since last update -mode, first using last update time as param
 - Then handle last update time in database
@@ -49,14 +54,6 @@ if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination']
   exit ("Exited due to missing parameters.");
 }
 
-// Allow deletions only if mode is all or update 
-if (isset($_GET['delele'])) {
-  if ("all" != $_GET['mode'] && "update" != $_GET['mode']) {
-    exit ("Exited because deletion is only allowed for mode=all or mode=update.");
-  }
-}
-
-// GET and convert observations
 // SINGLE
 if ("single" == $_GET['mode']) {
   log2("NOTICE", "Started: single " . $_GET['key'], "log/inat-obs-log.log");
@@ -72,13 +69,34 @@ if ("single" == $_GET['mode']) {
 //  print_r ($dwObservations);
 //  echo hashInatObservation($data['results'][0]);
 }
+
+// DELETESINGLE
+elseif ("deleteSingle" == $_GET['mode']) {
+  log2("NOTICE", "Started: deleteSingle " . $_GET['key'], "log/inat-obs-log.log");
+
+  // Delete from API
+  $documentId = "http://tun.fi/HR.3211/" . $_GET['key'];
+  deleteFactory($documentId, $_GET['destination']);
+
+  // Trash from database
+  if ("dryrun" != $_GET['destination']) {
+    $database->updateStatus($_GET['key'], -1);
+  }
+
+//  log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
+
+//  $numberOfDeleted = deleteNonUpdated($database); // todo: add idAbove & limit (based on page*perpage count), to avoid deleting too much while testing
+//  log2("NOTICE", "Finished deleting $numberOfDeleted observations missing from source", "log/inat-obs-log.log");
+
+}
+
 // ALL
 elseif ("all" == $_GET['mode']) {
   log2("NOTICE", "Started: all " . $_GET['key'], "log/inat-obs-log.log");
   // See max 10k observations bug: https://github.com/inaturalist/iNaturalistAPI/issues/134
 
   $perPage = 2;
-  $getLimit = 2;
+  $getLimit = 1;
   $idAbove = $_GET['key'];
   $sleepSecondsBetweenGets = 2; // iNat limit: ... keep it to 60 requests per minute or lower, and to keep under 10,000 requests per day
 
@@ -111,23 +129,16 @@ elseif ("all" == $_GET['mode']) {
     pushFactory($dwObservations, $_GET['destination']);
 
     // Log after push if successful
-    logObservationsToDatabase($data['results'], 1, $database);
+    logObservationsToDatabase($data['results'], 0, $database); // todo: 0 = first upload, 1 = update
 
     // Prepare for next round
     $i++;
     sleep($sleepSecondsBetweenGets); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
-
-  // Finally delete those that were not updated
-  if (TRUE == $_GET['delete']) {
-    log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
-
-    $numberOfDeleted = deleteNonUpdated($database);
-    log2("NOTICE", "Finished deleting $numberOfDeleted observations missing from source", "log/inat-obs-log.log");
-  }
 }
 
-log2("NOTICE", "Finished", "log/inat-obs-log.log");
+echo "END\n";
+log2("END", "", "log/inat-obs-log.log");
 
 $database->close();
 
@@ -136,24 +147,49 @@ $database->close();
 
 function deleteNonUpdated($database) {
   // todo: delete from api, update database
+  $count = 0;
 
+  // Get id's that were not updated
   $nonUpdatedIds = $database->getNonUpdatedIds();
   print_r ($nonUpdatedIds); // debug
 
   foreach ($nonUpdatedIds as $nro => $id) {
+
     // API delete $id
+
+    $documentId = "http://tun.fi/HR.3211/" . $id;
+    deleteFromApiTest($documentId);
+
+    /*
+    $dwObservations = Array();
+    $documentId = "http://tun.fi/HR.3211/" . $id;
+    $documentId = "https://www.inaturalist.org/observations/" . $id; // old format, needed to delete old observations
+
+//    $dwObservations[0]['sourceId'] = "http://tun.fi/KE.901";
+//    $dwObservations[0]['documentId'] = $documentId;
+    $dwObservations[0]['publicDocument']['documentId'] = $documentId;
+    $dwObservations[0]['publicDocument']['deleteRequest'] = TRUE;
+    $dwJson = compileDwJson($dwObservations);
+    postToAPItest($dwJson);
+    */
+    log2("NOTICE", "Sent DELETE request to API for " . $documentId, "log/inat-obs-log.log");
+
+    // Set trashed in database
+    $database->updateStatus($id, -1);
+
+    $count++;
+    break; // debug: break after one observation
   }
 
-  return 0;
-
+  return $count;
 }
 
-function pushFactory($dwObservations, $destination) {
+function deleteFactory($documentId, $destination) {
   if ("dryrun" == $destination) {
-    pushToEcho($dwObservations);
+    pushToEcho($documentId);
   }
   elseif ("test" == $destination) {
-    pushToTestDw($dwObservations);
+    deleteFromApiTest($documentId);
   }
   // Todo here: Push to production
   else {
@@ -162,10 +198,24 @@ function pushFactory($dwObservations, $destination) {
   return NULL;
 }
 
-function pushToEcho($dwObservations) {
-  log2("NOTICE", "Pushing to dryrun", "log/inat-obs-log.log");
+function pushFactory($dwObservations, $destination) {
+  if ("dryrun" == $destination) {
+    pushToEcho($documentId);
+  }
+  elseif ("test" == $destination) {
+    deleteFromApiTest($documentId);
+  }
+  // Todo here: Push to production
+  else {
+    exit("Exited due to unknown destination value");
+  }
+  return NULL;
+}
+
+function pushToEcho($data) {
+  log2("NOTICE", "Dryrun", "log/inat-obs-log.log");
   echo "DRYRUN...\n\n";
-  print_r ($dwObservations);
+  print_r ($data);
 }
 
 function pushToTestDw($dwObservations) {
@@ -176,6 +226,7 @@ function pushToTestDw($dwObservations) {
   $dwJson = compileDwJson($dwObservations);
 
   $response = postToAPItest($dwJson);
+  // todo: move error handling to mysql? see delete method.
   if (200 == $response['http_code']) {
     log2("SUCCESS", "API responded " . $response['http_code'], "log/inat-obs-log.log");
   }

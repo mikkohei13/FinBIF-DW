@@ -114,11 +114,6 @@ class mysqlDb
         }
     }
 
-    public function updateStatus($id, $status) {
-        // TODO
-        // Update
-    }
-
     public function doesIDExist($id) {
         $sql = "
         SELECT id FROM observations 
@@ -191,6 +186,29 @@ class mysqlDb
         }
     }
 
+    public function updateStatus($id, $status) {
+        $timestamp = time();
+
+        // todo: data security / prepared statements
+        $sql = "
+        UPDATE observations
+        SET
+            timestamp = $timestamp,
+            status = $status
+        WHERE id = $id;
+        ";
+
+        if ($this->conn->query($sql)) {
+            $this->log2("NOTICE", "Trashed $id from database", "log/inat-obs-log.log"); 
+            return TRUE;
+        }
+        else {
+            $this->error = "Error updating record: " . $this->conn->error;
+            $this->log2("ERROR", "Trashing $id from database failed", "log/inat-obs-log.log"); 
+            return FALSE;
+        }
+    }
+
     public function insert($id, $hash = "", $status = "") {
         $timestamp = time();
 
@@ -218,15 +236,22 @@ class mysqlDb
         $arr = Array();
 
         $sql = "
-        SELECT id FROM observations 
-        WHERE status = 0;
+        SELECT id, status FROM observations 
+        WHERE status = 0 ORDER BY id ASC;
         ";
+
+        echo $sql . "\n"; // debug
 
         $result = $this->conn->query($sql);
 
+        $rowCount = mysqli_num_rows($result);
+        $this->log2("NOTICE", "Database contains " . $rowCount . " observations with status 0", "log/inat-obs-log.log"); 
+
         if ($result) {
             while ($row = $result->fetch_assoc()) {
+//                if ($row['id'] == 33068) { echo "PROBLEM"; } else { echo "NO PROB"; }
                 $arr[] = $row['id'];
+                echo $row['id'] . " " . $row['status']  . "\n"; // debug
             }
             return $arr;
         }
