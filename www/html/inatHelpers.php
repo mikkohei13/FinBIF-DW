@@ -171,28 +171,28 @@ function handleAnnotation($annotation) {
 function getLicenseUrl($licenseCode) {
   switch ($licenseCode) {
     case "cc0":
-      $ret = "https://creativecommons.org/publicdomain/zero/1.0/";
+      $ret = "http://tun.fi/MZ.intellectualRightsCC0-4.0";
       break;
     case "cc-by":
-      $ret = "https://creativecommons.org/licenses/by/4.0/";
+      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-4.0";
       break;
     case "cc-by-nc":
-      $ret = "https://creativecommons.org/licenses/by-nc/4.0/";
+      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-NC-4.0";
       break;
     case "cc-by-nd":
-      $ret = "https://creativecommons.org/licenses/by-nd/4.0/";
+      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-ND-4.0";
       break;
     case "cc-by-sa":
-      $ret = "https://creativecommons.org/licenses/by-sa/4.0/";
+      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-SA-4.0";
       break;
     case "cc-by-nc-nd":
-      $ret = "https://creativecommons.org/licenses/by-nc-nd/4.0/";
+      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-NC-ND-4.0";
       break;
     case "cc-by-nc-sa":
-      $ret = "https://creativecommons.org/licenses/by-nc-sa/4.0/";
+      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-NC-SA-4.0";
       break;
     default:
-      $ret = "https://creativecommons.org/licenses/by-nc-nd/4.0/"; // Strictest license
+      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-NC-ND-4.0"; // Default to strictest license
       break;
   }
   return $ret;
