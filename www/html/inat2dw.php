@@ -18,6 +18,7 @@ function observationInat2Dw($inat) {
   - without_taxon_id: [human id] (todo: remove human filter here)
   
   Todo:
+  - harmonize grade names in keywords and facts
   - Decide what to do with unit and gathering id's. Gut feeling (24.9.2019: Create a new, since iNat has not officially declared that the uri is an identifier. GBIF just acts like it is.)
   - Check that all fields are shown on dw
   - Check that all non-meta data is under public document

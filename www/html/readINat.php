@@ -98,6 +98,8 @@ elseif ("all" == $_GET['mode']) {
     // Per observation
     foreach ($data['results'] as $nro => $obs) {
 
+      // todo: check if already in database with unchanged hash -> don't update
+
       // Convert
       // Todo: log and exit() if error converting
       $dwObservations[] = observationInat2Dw($obs);
@@ -120,7 +122,7 @@ elseif ("all" == $_GET['mode']) {
   if (TRUE == $_GET['delete']) {
     log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
 
-    $numberOfDeleted = $database->deleteNonUpdated();
+    $numberOfDeleted = deleteNonUpdated($database);
     log2("NOTICE", "Finished deleting $numberOfDeleted observations missing from source", "log/inat-obs-log.log");
   }
 }
@@ -131,6 +133,20 @@ $database->close();
 
 
 //--------------------------------------------------------------------------
+
+function deleteNonUpdated($database) {
+  // todo: delete from api, update database
+
+  $nonUpdatedIds = $database->getNonUpdatedIds();
+  print_r ($nonUpdatedIds); // debug
+
+  foreach ($nonUpdatedIds as $nro => $id) {
+    // API delete $id
+  }
+
+  return 0;
+
+}
 
 function pushFactory($dwObservations, $destination) {
   if ("dryrun" == $destination) {

@@ -214,6 +214,30 @@ class mysqlDb
         }
     }
 
+    public function getNonUpdatedIds() {
+        $arr = Array();
+
+        $sql = "
+        SELECT id FROM observations 
+        WHERE status = 0;
+        ";
+
+        $result = $this->conn->query($sql);
+
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $arr[] = $row['id'];
+            }
+            return $arr;
+        }
+        else {
+            $this->error = "Error getting non-updated: " . $this->conn->error;
+            return FALSE;
+        }
+
+        
+    }
+ 
     public function close() {
         mysqli_close($this->conn);
     }
