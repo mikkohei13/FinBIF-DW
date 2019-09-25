@@ -29,7 +29,6 @@ Test values
 key = 33084315; // Violettiseitikki submitted on 20.9.2019
 
 TODO:
-- Fix DW errors
 - See push plan in readme
 - Check that all exit's have logging
 - Add since last update -mode, first using last update time as param
@@ -48,6 +47,13 @@ echo "<pre>";
 // Check that params are set
 if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination'])) {
   exit ("Exited due to missing parameters.");
+}
+
+// Allow deletions only if mode is all or update 
+if (isset($_GET['delele'])) {
+  if ("all" != $_GET['mode'] && "update" != $_GET['mode']) {
+    exit ("Exited because deletion is only allowed for mode=all or mode=update.");
+  }
 }
 
 // GET and convert observations
@@ -91,8 +97,6 @@ elseif ("all" == $_GET['mode']) {
 
     // Per observation
     foreach ($data['results'] as $nro => $obs) {
-//      print_r (obs);
-//      echo $obs['id'] . "\n"; // debug
 
       // Convert
       // Todo: log and exit() if error converting
@@ -103,11 +107,21 @@ elseif ("all" == $_GET['mode']) {
     }
 
     pushFactory($dwObservations, $_GET['destination']);
-    logObservationsToDatabase($data['results'], 0, $database);
+
+    // Log after push if successful
+    logObservationsToDatabase($data['results'], 1, $database);
 
     // Prepare for next round
     $i++;
     sleep($sleepSecondsBetweenGets); // improve: deduct time it took to run conversion & POST from the target sleep time
+  }
+
+  // Finally delete those that were not updated
+  if (TRUE == $_GET['delete']) {
+    log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
+
+    $numberOfDeleted = $database->deleteNonUpdated();
+    log2("NOTICE", "Finished deleting $numberOfDeleted observations missing from source", "log/inat-obs-log.log");
   }
 }
 
@@ -185,9 +199,11 @@ function getObsArr_basedOnId($idAbove, $perPage) {
   $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove; // new, to avoid pagination bug
 
   echo $url . "\n"; // debug
-  log2("NOTICE", "Fetched $perPage obs with idAbove $idAbove", "log/inat-obs-log.log");
+  log2("NOTICE", "Fetching $perPage obs with idAbove $idAbove", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
+  log2("NOTICE", "Fetch complete", "log/inat-obs-log.log");
+
   return json_decode($observationsJson, TRUE);
 }
 

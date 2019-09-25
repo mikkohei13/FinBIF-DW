@@ -23,7 +23,6 @@ function observationInat2Dw($inat) {
   - Check that all non-meta data is under public document
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
   - Filter mikkohei13 observations (will be duplicates, but have images...)
-  - Edited date? yyyy-mm-dd
 
   Ask Esko:
   - Showing license uri on viewer, list, file download?
@@ -62,7 +61,7 @@ function observationInat2Dw($inat) {
   $dw['collectionId'] = $collectionId;
   $dw['publicDocument']['collectionId'] = $collectionId;
   $dw['sourceId'] = "http://tun.fi/KE.901";
-  $dw['deleteRequest'] = FALSE;
+//  $dw['deleteRequest'] = FALSE;
   $dw['schema'] = "laji-etl";
   $dw['publicDocument']['secureLevel'] = "NONE";
   $dw['publicDocument']['concealment'] = "PUBLIC";
