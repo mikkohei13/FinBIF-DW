@@ -3,12 +3,15 @@
 SET NAMES utf8;
 SET time_zone = '+00:00';
 
+USE `inat_push`;
+
 SET NAMES utf8mb4;
 
 DROP TABLE IF EXISTS `latest_update`;
 CREATE TABLE `latest_update` (
   `id` int(11) NOT NULL,
-  `latest_update` bigint(20) DEFAULT NULL
+  `observation_id` int(11) DEFAULT NULL,
+  `latest_update` varchar(40) COLLATE utf8mb4_swedish_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_swedish_ci;
 
 
@@ -21,4 +24,4 @@ CREATE TABLE `observations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_swedish_ci;
 
 
--- 2019-09-19 02:40:29
+-- 2019-09-26 20:02:36
