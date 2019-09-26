@@ -49,43 +49,45 @@ class mysqlDb
         }
     }
 
-    public function set_latest_update() {
-        $timestamp = time();
+    public function setLatestUpdate($idAbove, $updateStartedTime) {
 
-        // todo: data security / prepared statements
+        // todo: this expects that there is entry with id = 1, and silently fails if there is not.
         $sql = "
         UPDATE latest_update
-        SET timestamp = $timestamp
+        SET latest_update = '$updateStartedTime',
+            observation_id = $idAbove
         WHERE id = 1;
         ";
 
-//f        echo $sql;
+//        echo $sql;
 
         if ($this->conn->query($sql)) {
-            // todo: log
+            $this->log2("NOTICE", "Logged to database: latest_update $updateStartedTime, observation_id = $idAbove", "log/inat-obs-log.log");
             return TRUE;
         }
         else {
-            $this->error = "Error updating latest_update time: " . $this->conn->error;
+            $this->error = "Error updating latest_update: " . $this->conn->error;
+            $this->log2("D", $this->error, "log/inat-obs-log.log");
             return FALSE;
-        }
+        }       
     }
 
-    public function get_latest_update() {
-        $timestamp = time();
+    public function getLatestUpdate() {
 
         // todo: data security / prepared statements
         $sql = "
-        SELECT timestamp FROM latest_update 
+        SELECT latest_update,
+                observation_id
+        FROM latest_update 
         WHERE id = 1;
         ";
 
         $result = $this->conn->query($sql);
 
         if ($result) {
-            // todo: log
             $arr = mysqli_fetch_assoc($result);
-            return $arr['timestamp'];
+            $this->log2("NOTICE", "Got latest update from db: latest_update " . $arr['latest_update'] . ", observation_id: " . $arr['observation_id'], "log/inat-obs-log.log");
+            return $arr['latest_update'];
         }
         else {
             $this->error = "Error getting latest_update time: " . $this->conn->error;

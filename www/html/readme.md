@@ -273,7 +273,7 @@ How to handle problems during the process?
 
 FRESH
 - If fails, stop the process
-- Restart manually, by giving the largest pushed id (this can be found rom the database), or simply by restarting the process
+- Restart manually, by giving the largest pushed id (this can be found rom the database), or simply by restarting the process from the beginning
 
 DAILY
 - If fails, stop the process, without saving the updated time to file
@@ -286,6 +286,32 @@ MONTHLY UPDATE
 MONTHLY DELETION
 - If fails, stop the process
 - Restart manually, from the beginning
+
+**
+
+single
+- id
+* for testing
+* status = 0
+
+manual
+- idAbove
+- max number, based on pages and page size
+* for testing and initial upload
+* status = 0
+* db lastPushedId & time
+
+newUpdate
+- updated since db last pushed time
+* for new records and visible updates
+* status = 0
+
+fullUpdate
+- no limits
+* for invisible updates and deletions
+* status = 1, delete, status = 0 (but only if full update without errors)
+
+
 
 ## Feedback about iNat API
 
