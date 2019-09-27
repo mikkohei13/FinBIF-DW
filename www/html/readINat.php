@@ -22,7 +22,7 @@ if ("dryrun" == $_GET['destination'] && "single" != $_GET['mode']) {
   exit("Dryrun is only allowed with mode=single");
 }
 
-const SLEEP_SECONDS = 2;
+const SLEEP_SECONDS = 5;
 
 $database = new mysqlDb("inat_push");
 if (!$database) {
@@ -114,7 +114,7 @@ elseif ("deleteSingle" == $_GET['mode']) {
 
 elseif ("manual" == $_GET['mode']) {
 
-  $perPage = 2;
+  $perPage = 100;
   $getLimit = 2;
 
   log2("NOTICE", "Started: manual with perPage $perPage, getLimit $getLimit, key " . $_GET['key'], "log/inat-obs-log.log");
@@ -314,7 +314,7 @@ function pushFactory($data, $destination) {
 function pushToEcho($data) {
   log2("NOTICE", "Dryrun", "log/inat-obs-log.log");
   echo "DRYRUN...\n\n";
-  print_r ($data);
+  print_r (json_decode($data, TRUE));
 }
 
 /*

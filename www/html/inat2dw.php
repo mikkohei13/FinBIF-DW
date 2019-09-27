@@ -251,7 +251,7 @@ function observationInat2Dw($inat) {
 
   // Observer name
   // Prefer full name over loginname
-  if (isset($inat['user']['name'])) {
+  if (!empty($inat['user']['name'])) {
     $observer = $inat['user']['name'];
   }
   else {
