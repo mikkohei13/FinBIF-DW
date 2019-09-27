@@ -71,15 +71,18 @@ if ("single" == $_GET['mode']) {
 
   $data = getObsArr_singleId($_GET['key']);
 
-  $dwObs = observationInat2Dw($data['results'][0]);
+  $obs = $data['results'][0]; // In this case just one observation
+  $dwObs = observationInat2Dw($obs);
   if ($dwObs) {
     $dwObservations[] = $dwObs;
+    $databaseObservations[] = $obs;
   }
 
   $dwJson = compileDwJson($dwObservations);
-
   pushFactory($dwJson, $_GET['destination']);
-  logObservationsToDatabase($data['results'], 0, $database);
+
+  // This needs to only handle observations submitted to DW, after they have been submitted
+  logObservationsToDatabase($databaseObservations, 0, $database);
 
 //  print_r ($dwObservations);
 //  echo hashInatObservation($data['results'][0]);
@@ -111,7 +114,7 @@ elseif ("deleteSingle" == $_GET['mode']) {
 
 elseif ("manual" == $_GET['mode']) {
 
-  $perPage = 10;
+  $perPage = 2;
   $getLimit = 2;
 
   log2("NOTICE", "Started: manual with perPage $perPage, getLimit $getLimit, key " . $_GET['key'], "log/inat-obs-log.log");
@@ -141,8 +144,9 @@ elseif ("manual" == $_GET['mode']) {
       $dwObs = observationInat2Dw($obs);
       if ($dwObs) {
         $dwObservations[] = $dwObs;
+        $databaseObservations[] = $obs;
       }
-
+    
       // Prepare for next observation
       $idAbove = $obs['id'];
     }
@@ -151,7 +155,7 @@ elseif ("manual" == $_GET['mode']) {
     pushFactory($dwJson, $_GET['destination']);
 
     // Log after push if successful
-    logObservationsToDatabase($data['results'], 0, $database); // todo: 0 = first upload, 1 = update
+    logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
 
     // Prepare for next round
     $i++;
@@ -162,23 +166,24 @@ elseif ("manual" == $_GET['mode']) {
 // ------------------------------------------------------------------------------------------------
 // NEWUPDATE
 // This will run until $limit or when no more observations available from iNat
-// If limit is reached, it will not update the updated time in database. Therefore next run will reupdate everything, which ensures that everything is handled, but places more burden on the DW.
+// If limit is reached, it will not update the updated time in database. Therefore next run will reupdate everything, which ensures that everything is handled (unless $limit is reached again), but places more burden on the DW.
 
 elseif ("newUpdate" == $_GET['mode']) {
 
   $perPage = 10;
 
   $limit = 1000;// High limit in production, should be enough if this is run daily
-  $limit = 100; // debug
+  $limit = 10; // debug
 
   log2("NOTICE", "Started: newUpdate", "log/inat-obs-log.log");
 
   // Need to generate update time here, since observations are coming from the API in random order -> cannot use their times
   // todo: timezone depends on server time settings?!
+  //  $updatedSince = "2019-09-26T00:00:00+03:00"; // debug
   $updateStartedTime = date("Y-m-d") . "T" . date("H:i:s") . "+03:00";
   $updateStartedTime = date("Y-m-d") . "T" . date("H:i:s") . "+00:00"; // Works with the Docker setup
+
   $updatedSince = $database->getLatestUpdate();
-//  $updatedSince = "2019-09-26T00:00:00+03:00"; // debug
 
   $idAbove = 0; // start value
 
@@ -206,7 +211,11 @@ elseif ("newUpdate" == $_GET['mode']) {
 
       // Convert
       // Todo: log and exit() if error converting
-      $dwObservations[] = observationInat2Dw($obs);
+      $dwObs = observationInat2Dw($obs);
+      if ($dwObs) {
+        $dwObservations[] = $dwObs;
+        $databaseObservations[] = $obs;
+      }
 
       // Prepare for next observation
       $idAbove = $obs['id'];
@@ -216,7 +225,7 @@ elseif ("newUpdate" == $_GET['mode']) {
     pushFactory($dwJson, $_GET['destination']);
 
     // Log after push if successful
-    logObservationsToDatabase($data['results'], 0, $database); // todo: 0 = first upload, 1 = update
+    logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
 
     // Prepare for next round
     $i++;
@@ -365,8 +374,7 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
   $updatedSince = urlencode($updatedSince);
 
   $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove;
-
-//  echo $url . "\n"; exit("DEBUG END"); // debug
+  log2("NOTICE", $url, "log/inat-obs-log.log");
 
   log2("NOTICE", "Fetching $perPage obs with updatedSince $updatedSince", "log/inat-obs-log.log");
 
@@ -378,8 +386,8 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
 
 function getObsArr_basedOnId($idAbove, $perPage) {
   $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove;
+  log2("NOTICE", $url, "log/inat-obs-log.log");
 
-  echo $url . "\n"; // debug
   log2("NOTICE", "Fetching $perPage obs with idAbove $idAbove", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
@@ -389,11 +397,13 @@ function getObsArr_basedOnId($idAbove, $perPage) {
 }
 
 function getObsArr_singleId($id) {
-  $url = "https://api.inaturalist.org/v1/observations?id=" . $id . "&order=desc&order_by=created_at&include_new_projects=true"; // Fetch single obs using observations endpoint, in order to get in in consistent format
+  $url = "https://api.inaturalist.org/v1/observations?id=" . $id . "&order=desc&order_by=created_at&include_new_projects=true";
+  log2("NOTICE", $url, "log/inat-obs-log.log");
 
-  echo $url . "\n"; // debug
   log2("DEBUG", "fetched url $url", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
+  log2("NOTICE", "Fetch complete", "log/inat-obs-log.log");
+
   return json_decode($observationsJson, TRUE);
 }
