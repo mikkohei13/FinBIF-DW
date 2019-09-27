@@ -157,8 +157,6 @@ elseif ("newUpdate" == $_GET['mode']) {
   $updatedSince = $database->getLatestUpdate();
 //  $updatedSince = "2019-09-26T00:00:00+03:00"; // debug
 
-//  exitIfTimeTooOld($updatedSince); // You can comment this out when testing. In production this prevents the update process from being too heavy..
-
   $idAbove = 0; // start value
 
   $sleepSecondsBetweenGets = 2;
@@ -214,21 +212,6 @@ $database->close();
 
 // ------------------------------------------------------------------------------------------------
 // FUNCTIONS
-
-function exitIfTimeTooOld($updatedSince) {
-  $timestamp = strtotime($updatedSince);
-  $maxTimeDays = 7;
-  $maxTimeSeconds = $maxTimeDays * 24 * 60 * 60;
-  $timeNow = time();
-
-  $updateAge = $timeNow - $timestamp;
-//  echo "$updateAge $maxTimeSeconds $timeNow $timestamp"; // debug
-
-  if ($updateAge > $maxTimeSeconds) {
-    exit("Exited because updatedSince is too old");
-  }
-  return TRUE;
-}
 
 function deleteNonUpdated($database) {
   // todo: delete from api, update database
