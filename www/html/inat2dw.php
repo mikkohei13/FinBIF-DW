@@ -43,15 +43,21 @@ function observationInat2Dw($inat) {
 
   // Flags/spam etc. filtering
   if (!empty($inat['flags'])) {
-    log2("NOTICE", "skipped observation having flag(s)\t" . $inat['id'], "log/inat-obs-log.log");
+    log2("WARNING", "Skipped observation having flag(s): " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
   if ("Homo sapiens" == $inat['taxon']['name']) {
-    log2("NOTICE", "skipped observation of human(s)\t" . $inat['id'], "log/inat-obs-log.log");
+    log2("WARNING", "Skipped observation of human(s): " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
   if (NULL == $inat['observed_on_details']) {
-    log2("NOTICE", "skipped observation without date\t" . $inat['id'], "log/inat-obs-log.log");
+    log2("WARNING", "Skipped observation without date: " . $inat['id'], "log/inat-obs-log.log");
+    return FALSE;
+  }
+
+  // Check that is from Finland
+  if (!in_array(7020, $inat['place_ids'])) {
+    log2("WARNING", "Skipped observation not from Finland: " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
 
@@ -103,7 +109,7 @@ function observationInat2Dw($inat) {
   if ($inat['quality_metrics']) {
     $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
     foreach ($qualityMetrics as $key => $value) {
-      $factsArr = factsArrayPush($factsArr, "D", "quality_metrics_" . $key, $value, TRUE);
+      $factsArr = factsArrayPush($factsArr, "U", "quality_metrics_" . $key, $value, TRUE);
     }
   }
 
@@ -265,7 +271,7 @@ function observationInat2Dw($inat) {
 
 
   // Quality grade
-  $factsArr = factsArrayPush($factsArr, "D", "quality_grade", $inat['quality_grade']);
+  $factsArr = factsArrayPush($factsArr, "U", "quality_grade", $inat['quality_grade']);
   array_push($keywordsArr, $inat['quality_grade'] . "_grade");
 
 
@@ -307,7 +313,7 @@ function observationInat2Dw($inat) {
   }
 
 
-  log2("SUCCESS", "Converted observation\t" . $inat['id'] . " of " . $inat['taxon']['name'] . " on " . $inat['observed_on_details']['date'], "log/inat-obs-log.log");
+  log2("NOTICE", "Converted observation\t" . $inat['id'] . " of " . $inat['taxon']['name'] . " on " . $inat['observed_on_details']['date'], "log/inat-obs-log.log");
   echo "handled ".$inat['id']."\n"; // debug
 
 
