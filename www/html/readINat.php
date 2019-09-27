@@ -7,8 +7,22 @@ require_once "mysql.php";
 require_once "_secrets.php";
 require_once "postToAPI.php";
 
+echo "<pre>";
 echo "START\n";
 log2("START", "------------------------------------------", "log/inat-obs-log.log");
+
+// Check that params are set
+// todo: key is not needed for newUpdate
+if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination'])) {
+  exit ("Exited due to missing parameters.");
+}
+
+// Allow dryrun only on single, to avoid misunderstandings
+if ("dryrun" == $_GET['destination'] && "single" != $_GET['mode']) {
+  exit("Dryrun is only allowed with mode=single");
+}
+
+const SLEEP_SECONDS = 2;
 
 $database = new mysqlDb("inat_push");
 if (!$database) {
@@ -20,7 +34,7 @@ if (!$database) {
 /*
 Params
 - MODE: single | all | since last update | all + delete | delete single
-- DESTINATION: dryrun (just display) | save to test | save to prod
+- DESTINATION: dryrun (just display) | test | prod
 - KEY: id or time to begin *after*
 
 Error handling
@@ -45,21 +59,11 @@ TODO:
 
 */
 
-echo "<pre>";
-
-$perPage = 10;
-$getLimit = 2;
-$sleepSecondsBetweenGets = 2; // todo: global CONST?
-
-
-// Check that params are set
-// todo: key is not needed for newUpdate
-if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination'])) {
-  exit ("Exited due to missing parameters.");
-}
 
 // ------------------------------------------------------------------------------------------------
 // SINGLE
+// This will push single observation to DW
+
 if ("single" == $_GET['mode']) {
   log2("NOTICE", "Started: single " . $_GET['key'], "log/inat-obs-log.log");
 
@@ -77,6 +81,8 @@ if ("single" == $_GET['mode']) {
 
 // ------------------------------------------------------------------------------------------------
 // DELETESINGLE
+// This will delete a single observation from DW
+
 elseif ("deleteSingle" == $_GET['mode']) {
   log2("NOTICE", "Started: deleteSingle " . $_GET['key'], "log/inat-obs-log.log");
 
@@ -85,20 +91,22 @@ elseif ("deleteSingle" == $_GET['mode']) {
   deleteFactory($documentId, $_GET['destination']);
 
   // Trash from database
-  if ("dryrun" != $_GET['destination']) {
-    $database->updateStatus($_GET['key'], -1);
-  }
+  $database->updateStatus($_GET['key'], -1);
 
 //  log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
 
 //  $numberOfDeleted = deleteNonUpdated($database); // todo: add idAbove & limit (based on page*perpage count), to avoid deleting too much while testing
 //  log2("NOTICE", "Finished deleting $numberOfDeleted observations missing from source", "log/inat-obs-log.log");
-
 }
 
 // ------------------------------------------------------------------------------------------------
 // MANUAL
+// This will run based on manually defined limit, which is based on $getLimit * $perPage, or until no more observations are available from iNat
+
 elseif ("manual" == $_GET['mode']) {
+
+  $perPage = 10;
+  $getLimit = 2;
 
   log2("NOTICE", "Started: manual with perPage $perPage, getLimit $getLimit, key " . $_GET['key'], "log/inat-obs-log.log");
 
@@ -138,20 +146,26 @@ elseif ("manual" == $_GET['mode']) {
 
     // Prepare for next round
     $i++;
-    sleep($sleepSecondsBetweenGets); // improve: deduct time it took to run conversion & POST from the target sleep time
+    sleep(SLEEP_SECONDS); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
 }
 
 // ------------------------------------------------------------------------------------------------
 // NEWUPDATE
-// In production, this mode must be run fully or not at all. If ran partially, the update time will be 
+// This will run until $limit or when no more observations available from iNat
+// If limit is reached, it will not update the updated time in database. Therefore next run will reupdate everything, which ensures that everything is handled, but places more burden on the DW.
 
 elseif ("newUpdate" == $_GET['mode']) {
+
+  $perPage = 10;
+
+  $limit = 1000;// High limit in production, should be enough if this is run daily
+  $limit = 100; // debug
 
   log2("NOTICE", "Started: newUpdate", "log/inat-obs-log.log");
 
   // Need to generate update time here, since observations are coming from the API in random order -> cannot use their times
-  // todo: timezone depends on server tie settings?!
+  // todo: timezone depends on server time settings?!
   $updateStartedTime = date("Y-m-d") . "T" . date("H:i:s") . "+03:00";
   $updateStartedTime = date("Y-m-d") . "T" . date("H:i:s") . "+00:00"; // Works with the Docker setup
   $updatedSince = $database->getLatestUpdate();
@@ -159,13 +173,10 @@ elseif ("newUpdate" == $_GET['mode']) {
 
   $idAbove = 0; // start value
 
-  $sleepSecondsBetweenGets = 2;
-
   $i = 1;
 
   // Per GET
-  // This is run until break, therefore have very high limit on while loop
-  while ($i <= 100) {
+  while ($i <= $limit) {
 
     $dwObservations = Array();
     log2("D", "$idAbove, $perPage, $updatedSince", "log/inat-obs-log.log");
@@ -200,7 +211,7 @@ elseif ("newUpdate" == $_GET['mode']) {
 
     // Prepare for next round
     $i++;
-    sleep($sleepSecondsBetweenGets); // improve: deduct time it took to run conversion & POST from the target sleep time
+    sleep(SLEEP_SECONDS); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
 }
 
