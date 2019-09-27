@@ -70,9 +70,15 @@ if ("single" == $_GET['mode']) {
   $dwObservations = Array();
 
   $data = getObsArr_singleId($_GET['key']);
-  $dwObservations[] = observationInat2Dw($data['results'][0]);
 
-  pushFactory($dwObservations, $_GET['destination']);
+  $dwObs = observationInat2Dw($data['results'][0]);
+  if ($dwObs) {
+    $dwObservations[] = $dwObs;
+  }
+
+  $dwJson = compileDwJson($dwObservations);
+
+  pushFactory($dwJson, $_GET['destination']);
   logObservationsToDatabase($data['results'], 0, $database);
 
 //  print_r ($dwObservations);
@@ -132,7 +138,10 @@ elseif ("manual" == $_GET['mode']) {
 
       // Convert
       // Todo: log and exit() if error converting
-      $dwObservations[] = observationInat2Dw($obs);
+      $dwObs = observationInat2Dw($obs);
+      if ($dwObs) {
+        $dwObservations[] = $dwObs;
+      }
 
       // Prepare for next observation
       $idAbove = $obs['id'];
@@ -215,7 +224,7 @@ elseif ("newUpdate" == $_GET['mode']) {
   }
 }
 
-echo "END\n";
+echo "\n\nEND\n";
 log2("END", "", "log/inat-obs-log.log");
 
 $database->close();
@@ -278,6 +287,8 @@ function deleteFactory($data, $destination) {
 }
 
 function pushFactory($data, $destination) {
+  log2("D", "pushFactory called: destination $destination", "log/inat-obs-log.log");
+
   if ("dryrun" == $destination) {
     pushToEcho($data);
   }
@@ -297,6 +308,7 @@ function pushToEcho($data) {
   print_r ($data);
 }
 
+/*
 function pushToTestDw($dwObservations) {
   log2("NOTICE", "Pushing to test DW", "log/inat-obs-log.log");
   echo "PUSHING TO TEST DW...\n\n";
@@ -315,6 +327,7 @@ function pushToTestDw($dwObservations) {
   }
   return NULL;
 }
+*/
 
 function logObservationsToDatabase($observations, $status, $database) {
 
@@ -323,7 +336,6 @@ function logObservationsToDatabase($observations, $status, $database) {
     $result = $database->push($obs['id'], $hash, $status);
     if (!$result) {
       log2("ERROR", "Database error " . $database->error, "log/inat-obs-log.log");
-      exit("exited due to database error.");
     }
   }
 
@@ -331,13 +343,16 @@ function logObservationsToDatabase($observations, $status, $database) {
 }
 
 function compileDwJson($dwObservations) {
+  if (empty($dwObservations)) {
+    log2("ERROR", "No observations to send ", "log/inat-obs-log.log");
+  }
+
   $dwRoot = Array();
   $dwRoot['schema'] = "laji-etl";
   $dwRoot['roots'] = $dwObservations;
   $dwJson = json_encode($dwRoot);
 
-  echo "\n" . $dwJson . "\n"; // debug
-
+//  echo "\nHERE'S JSON\n" . $dwJson . "\n"; // debug
   return $dwJson;
 }
 

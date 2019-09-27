@@ -1,6 +1,7 @@
 <?php
 
 function postToAPItest($json) {
+  print_r ($json);
 
   GLOBAL $apitestAccessToken;
 
@@ -20,7 +21,9 @@ function postToAPItest($json) {
   if (200 != $curlInfo['http_code']) {
     log2("ERROR", "API responded " . $curlInfo['http_code'] . " / " . $response, "log/inat-obs-log.log");
   }
-  log2("NOTICE", "API responded 200 to POST request", "log/inat-obs-log.log");
+  else {
+    log2("NOTICE", "API responded " . $curlInfo['http_code'] . " / " . $response, "log/inat-obs-log.log");
+  }
   return $curlInfo;
 }
 
@@ -44,9 +47,11 @@ function deleteFromApiTest($documentId) {
 //  print_r ($curlInfo); // debug
 
   if (200 != $curlInfo['http_code']) {
-    log2("ERROR", "API responded to deletion " . $curlInfo['http_code'] . " / " . $response, "log/inat-obs-log.log");
+    log2("ERROR", "API responded " . $curlInfo['http_code'] . " / " . $response, "log/inat-obs-log.log");
   }
-  log2("NOTICE", "API responded 200 to DELETE request", "log/inat-obs-log.log");
+  else {
+    log2("NOTICE", "API responded " . $curlInfo['http_code'] . " / " . $response, "log/inat-obs-log.log");
+  }
   return $curlInfo;
 }
 

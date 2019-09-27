@@ -35,6 +35,11 @@ class mysqlDb
         $message = date("Y-m-d H:i:s") . "\t" . $type . "\t" . $caller['file'] . "\t" . $caller['line'] . "\t" . $message . "\n";
 
         $bytes = file_put_contents($filename, $message, FILE_APPEND);
+
+        if ("ERROR" == $type) {
+            exit("Exited through logger");
+        }
+        
         return $bytes;
     }
 
