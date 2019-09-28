@@ -101,7 +101,9 @@ elseif ("deleteSingle" == $_GET['mode']) {
   deleteFactory($documentId, $_GET['destination']);
 
   // Trash from database
-  $database->updateStatus($_GET['key'], -1);
+  if ("dryrun" != $_GET['destination']) {
+    $database->updateStatus($_GET['key'], -1);
+  }
 
 //  log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
 
@@ -282,12 +284,12 @@ function deleteNonUpdated($database) {
   return $count;
 }
 
-function deleteFactory($data, $destination) {
+function deleteFactory($documentId, $destination) {
   if ("dryrun" == $destination) {
-    pushToEcho($data);
+    pushToEcho($documentId);
   }
   elseif ("test" == $destination) {
-    deleteFromApiTest($data);
+    deleteFromApiTest($documentId);
   }
   // Todo here: Push to production
   else {
@@ -313,9 +315,18 @@ function pushFactory($data, $destination) {
 }
 
 function pushToEcho($data) {
+  // $data might be json or plain string. We want to display json as an array using print_r()
   log2("NOTICE", "Dryrun", "log/inat-obs-log.log");
   echo "DRYRUN...\n\n";
-  print_r (json_decode($data, TRUE));
+
+  $decoded = json_decode($data, TRUE);
+  if (is_array($decoded)) {
+    print_r ($decoded);
+  }
+  else {
+    echo $data;
+  }
+  return NULL;
 }
 
 /*
