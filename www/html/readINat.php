@@ -17,9 +17,10 @@ if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination']
   exit ("Exited due to missing parameters.");
 }
 
-// Allow dryrun only on single, to avoid misunderstandings
-if ("dryrun" == $_GET['destination'] && "single" != $_GET['mode']) {
-  exit("Dryrun is only allowed with mode=single");
+// Allow dryrun only on single & deleteSingle, to avoid misunderstandings
+if ("dryrun" == $_GET['destination']) {
+  if ("single" != $_GET['mode'] && "deleteSingle" != $_GET['mode'])
+  exit("Dryrun is only allowed with mode=single|deleteSingle");
 }
 
 const SLEEP_SECONDS = 5;
