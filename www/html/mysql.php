@@ -128,7 +128,7 @@ class mysqlDb
         }
     }
 
-    public function doesIDExist($id) {
+    private function doesIDExist($id) {
         $sql = "
         SELECT id FROM observations 
         WHERE id = $id;
@@ -291,37 +291,6 @@ class mysqlDb
             $this->error = "Error inserting record: " . $this->conn->error;
             return FALSE;
         }
-    }
-
-    public function getNonUpdatedIds() {
-        $arr = Array();
-
-        $sql = "
-        SELECT id, status FROM observations 
-        WHERE status = 0 ORDER BY id ASC;
-        ";
-
-        echo $sql . "\n"; // debug
-
-        $result = $this->conn->query($sql);
-
-        $rowCount = mysqli_num_rows($result);
-        $this->log2("NOTICE", "Database contains " . $rowCount . " observations with status 0", "log/inat-obs-log.log"); 
-
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-//                if ($row['id'] == 33068) { echo "PROBLEM"; } else { echo "NO PROB"; }
-                $arr[] = $row['id'];
-                echo $row['id'] . " " . $row['status']  . "\n"; // debug
-            }
-            return $arr;
-        }
-        else {
-            $this->error = "Error getting non-updated: " . $this->conn->error;
-            return FALSE;
-        }
-
-        
     }
  
     public function close() {
