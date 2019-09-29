@@ -107,13 +107,13 @@ elseif ("deleteSingle" == $_GET['mode']) {
 
 //  log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
 
-//  $numberOfDeleted = deleteNonUpdated($database); // todo: add idAbove & limit (based on page*perpage count), to avoid deleting too much while testing
+//  $numberOfDeleted = deleteNonUpdated($database); // todo: add idAbove & getLimit (based on page*perpage count), to avoid deleting too much while testing
 //  log2("NOTICE", "Finished deleting $numberOfDeleted observations missing from source", "log/inat-obs-log.log");
 }
 
 // ------------------------------------------------------------------------------------------------
 // MANUAL
-// This will run based on manually defined limit, which is based on $getLimit * $perPage, or until no more observations are available from iNat
+// This will run based on manually defined getLimit, which is based on $getLimit * $perPage, or until no more observations are available from iNat
 
 elseif ("manual" == $_GET['mode']) {
 
@@ -140,6 +140,8 @@ elseif ("manual" == $_GET['mode']) {
     // Per observation
     foreach ($data['results'] as $nro => $obs) {
 
+      // todo: add manualSoft & manualHard
+      // todo: if mode = manualSoft
       // todo: check if already in database with unchanged hash -> don't update
 
       // Convert
@@ -168,17 +170,17 @@ elseif ("manual" == $_GET['mode']) {
 
 // ------------------------------------------------------------------------------------------------
 // NEWUPDATE
-// This will run until $limit or when no more observations available from iNat
-// If limit is reached, it will not update the updated time in database. Therefore next run will reupdate everything, which ensures that everything is handled (unless $limit is reached again), but places more burden on the DW.
+// This will run until $getLimit or when no more observations available from iNat
+// If getLimit is reached, it will not update the updated time in database. Therefore next run will reupdate everything, which ensures that everything is handled (unless $getLimit is reached again), but places more burden on the DW.
 
 elseif ("newUpdate" == $_GET['mode']) {
 
   $perPage = 10;
 
-  $limit = 1000;// High limit in production, should be enough if this is run daily
-  $limit = 10; // debug
+  $getLimit = 1000;// High getLimit in production, should be enough if this is run daily
+  $getLimit = 10; // debug
 
-  log2("NOTICE", "Started: newUpdate", "log/inat-obs-log.log");
+  log2("NOTICE", "Started: newUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
 
   // Need to generate update time here, since observations are coming from the API in random order -> cannot use their times
   // todo: timezone depends on server time settings?!
@@ -193,7 +195,7 @@ elseif ("newUpdate" == $_GET['mode']) {
   $i = 1;
 
   // Per GET
-  while ($i <= $limit) {
+  while ($i <= $getLimit) {
 
     $dwObservations = Array();
     log2("D", "$idAbove, $perPage, $updatedSince", "log/inat-obs-log.log");
@@ -209,8 +211,6 @@ elseif ("newUpdate" == $_GET['mode']) {
 
     // Per observation
     foreach ($data['results'] as $nro => $obs) {
-
-      // todo: check if already in database with unchanged hash -> don't update
 
       // Convert
       // Todo: log and exit() if error converting
@@ -234,6 +234,109 @@ elseif ("newUpdate" == $_GET['mode']) {
     $i++;
     sleep(SLEEP_SECONDS); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
+}
+
+// ------------------------------------------------------------------------------------------------
+// FULLUPDATE
+// This will run through all observations, and A) updates only changed obs and 2) Marks which observations have been deleted.
+// Test: deleted observtion 33586301 (Hypoxylaceae 29.9.2019)
+
+elseif ("fullUpdate" == $_GET['mode']) {
+  $allHandled = FALSE; // todo: use this in all modes?
+
+  $perPage = 100; // Production
+  $perPage = 10; // Debug
+
+  $getLimit = 10000000; // Production: no getLimit
+  $getLimit = 10; // Debug
+
+  log2("NOTICE", "Started: fullUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
+
+  $i = 1;
+
+  $idAbove = 0; // Production
+  $idAbove = $_GET['key']; // Debug
+
+  // Per GET
+  while ($i <= $getLimit) {
+    $dwObservations = Array();
+
+    $data = getObsArr_basedOnId($idAbove, $perPage);
+
+    if (0 === $data['total_results']) {
+      log2("NOTICE", "No more results from API with idAbove " . $idAbove, "log/inat-obs-log.log");
+      $allHandled = TRUE;
+      break;
+    }
+
+    // Per observation
+    foreach ($data['results'] as $nro => $obs) {
+
+      $id = $obs['id'];
+      $hash = hashInatObservation($obs);
+      $obsNotChanged = $database->doesHashExist($id, $hash);
+
+      if ($obsNotChanged) {
+        // Just log to db
+        $databaseObservations[] = $obs;
+        log2("NOTICE", "Observation has NOT changed: " . $obs['id'], "log/inat-obs-log.log");
+      }
+      else {
+        log2("NOTICE", "Observation has changed: " . $obs['id'], "log/inat-obs-log.log");
+        // Push obs to DW and log to db
+        // This covers both old and new obs in DW
+
+        /*
+        Todo:
+        - Save each obs status = 1 into db separately
+        - At the end, set status 0 -> 2 & 1 -> 0
+        */
+
+        // Convert
+        // Todo: log and exit() if error converting
+        $dwObs = observationInat2Dw($obs);
+        if ($dwObs) {
+          $dwObservations[] = $dwObs;
+          $databaseObservations[] = $obs;
+        }
+      }
+
+      // Push to db
+//      $database->push($id, $hash, 1); // ABBA
+
+      // Prepare for next observation
+      $idAbove = $obs['id'];
+    }
+
+    // PUSH
+    $dwJson = compileDwJson($dwObservations);
+    pushFactory($dwJson, $_GET['destination']);
+
+    // Log after push if successful
+    logObservationsToDatabase($databaseObservations, 1, $database); // todo: 0 = first upload, 1 = update
+
+    // Prepare for next round
+    $i++;
+    sleep(SLEEP_SECONDS); // improve: deduct time it took to run conversion & POST from the target sleep time
+  }
+
+  // Show warning /error when debugging, because this needs manual fixing
+  if (FALSE == $allHandled) {
+    log2("WARNING", "WARNING! Process stopped before all observations handled! Database is now in incostent state. This should ony happen when debugging the system", "log/inat-obs-log.log");
+    // Fix database using UPDATE observations SET status = 0 WHERE status = 2;
+
+    if ("production" == $_GET['destination']) {
+      log2("ERROR", "Using debug values in production, stopping...", "log/inat-obs-log.log");
+    }
+  }
+
+  // Updated database values
+  $database->set0to2();
+  $database->set1to0();
+
+}
+else {
+  log2("ERROR", "Incorrect mode", "log/inat-obs-log.log");
 }
 
 echo "\n\nEND\n";
@@ -299,6 +402,13 @@ function deleteFactory($documentId, $destination) {
 }
 
 function pushFactory($data, $destination) {
+  // todo: is there more efficient way to do this? Move json encoding here, to avoid first encoding and then decoding?
+  $arr = json_decode($data, TRUE);
+  if (empty($arr['roots'])) {
+    log2("NOTICE", "No observations to push ", "log/inat-obs-log.log");
+    return FALSE;
+  }
+
   log2("D", "pushFactory called: destination $destination", "log/inat-obs-log.log");
 
   if ("dryrun" == $destination) {
@@ -351,6 +461,13 @@ function pushToTestDw($dwObservations) {
 */
 
 function logObservationsToDatabase($observations, $status, $database) {
+  /*
+  Statuses:
+  0 = Observation copied to DW.
+  1 = Temporary value for observations that are still in DW. If this is in db, it meanst that update execution has stopped unexpectedly. In this case, these shoud be set -> 0 manually, and then update re-run.
+  2 = Observation deleted frim iNat, but still present in DW, waiting to be removed.
+  -1 = Observation deleted from iNat and DW.
+  */
 
   foreach ($observations as $nro => $obs) {
     $hash = hashInatObservation($obs);
@@ -364,10 +481,6 @@ function logObservationsToDatabase($observations, $status, $database) {
 }
 
 function compileDwJson($dwObservations) {
-  if (empty($dwObservations)) {
-    log2("ERROR", "No observations to send ", "log/inat-obs-log.log");
-  }
-
   $dwRoot = Array();
   $dwRoot['schema'] = "laji-etl";
   $dwRoot['roots'] = $dwObservations;
@@ -391,9 +504,8 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
   log2("NOTICE", "Fetching $perPage obs with updatedSince $updatedSince", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
-  log2("NOTICE", "Fetch complete", "log/inat-obs-log.log");
 
-  return json_decode($observationsJson, TRUE);
+  return checkInatApiError($observationsJson);
 }
 
 function getObsArr_basedOnId($idAbove, $perPage) {
@@ -403,9 +515,8 @@ function getObsArr_basedOnId($idAbove, $perPage) {
   log2("NOTICE", "Fetching $perPage obs with idAbove $idAbove", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
-  log2("NOTICE", "Fetch complete", "log/inat-obs-log.log");
 
-  return json_decode($observationsJson, TRUE);
+  return checkInatApiError($observationsJson);
 }
 
 function getObsArr_singleId($id) {
@@ -415,7 +526,25 @@ function getObsArr_singleId($id) {
   log2("DEBUG", "fetched url $url", "log/inat-obs-log.log");
 
   $observationsJson = file_get_contents($url);
-  log2("NOTICE", "Fetch complete", "log/inat-obs-log.log");
 
-  return json_decode($observationsJson, TRUE);
+  return checkInatApiError($observationsJson);
+}
+
+function checkInatApiError($observationsJson) {
+  // Error handling by file_get_contents should be enough
+  if (FALSE == $observationsJson) {
+    log2("ERROR", "iNat API responded with error, check your params", "log/inat-obs-log.log");
+  }
+  $observationsArr = json_decode($observationsJson, TRUE);
+
+  // ...but here's code for handling it by error json returned by iNat
+  /*
+  if (isset($observationsArr['error'])) {
+    if ("Error" == $observationsArr['error'] || "200" != $observationsArr['status']) {
+      log2("ERROR", "iNat API responded with error " . $observationsArr['status'], "log/inat-obs-log.log");
+    }
+  }
+  */
+
+  return $observationsArr;
 }

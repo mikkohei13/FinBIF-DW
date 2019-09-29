@@ -152,12 +152,14 @@ class mysqlDb
     }
 
     public function doesHashExist($id, $hash) {
+        $this->log2("D", "Searching for id $id, hash $hash", "log/inat-obs-log.log");
+
         $sql = "
         SELECT id FROM observations 
         WHERE
             id = $id 
             AND
-            hash = $hash;
+            hash = '$hash';
         ";
 
         $result = $this->conn->query($sql);
@@ -165,13 +167,16 @@ class mysqlDb
         if ($result) {
             $rowCount = mysqli_num_rows($result);
             if ($rowCount > 0) {
+//                $this->log2("D", "FOUND", "log/inat-obs-log.log");
                 return TRUE;
             }
             else {
-                return NULL;
+//                $this->log2("D", "NOT FOUND", "log/inat-obs-log.log");
+                return FALSE;
             }
         }
         else {
+//            $this->log2("D", "ERROR", "log/inat-obs-log.log");
             $this->error = "Error finding hash: " . $this->conn->error;
             return FALSE;
         }
@@ -219,6 +224,48 @@ class mysqlDb
         else {
             $this->error = "Error updating record: " . $this->conn->error;
             $this->log2("ERROR", "Trashing $id from database failed", "log/inat-obs-log.log"); 
+            return FALSE;
+        }
+    }
+
+    public function set0to2() {
+        $timestamp = time();
+
+        // todo: data security / prepared statements
+        $sql = "
+        UPDATE observations
+        SET status = 2
+        WHERE status = 0;
+        ";
+
+        if ($this->conn->query($sql)) {
+            $this->log2("NOTICE", "Set 0 to 2 in database", "log/inat-obs-log.log"); 
+            return TRUE;
+        }
+        else {
+            $this->error = "Error updating record: " . $this->conn->error;
+            $this->log2("NOTICE", "Setting 0 to 2 in failed", "log/inat-obs-log.log"); 
+            return FALSE;
+        }
+    }
+
+    public function set1to0() {
+        $timestamp = time();
+
+        // todo: data security / prepared statements
+        $sql = "
+        UPDATE observations
+        SET status = 0
+        WHERE status = 1;
+        ";
+
+        if ($this->conn->query($sql)) {
+            $this->log2("NOTICE", "Set 1 to 0 in database", "log/inat-obs-log.log"); 
+            return TRUE;
+        }
+        else {
+            $this->error = "Error updating record: " . $this->conn->error;
+            $this->log2("NOTICE", "Setting 1 to 0 in failed", "log/inat-obs-log.log"); 
             return FALSE;
         }
     }
