@@ -68,8 +68,6 @@ TODO:
 if ("single" == $_GET['mode']) {
   log2("NOTICE", "Started: single " . $_GET['key'], "log/inat-obs-log.log");
 
-  $dwObservations = Array();
-
   $data = getObsArr_singleId($_GET['key']);
 
   $obs = $data['results'][0]; // In this case just one observation
@@ -128,7 +126,6 @@ elseif ("manual" == $_GET['mode']) {
 
   // Per GET
   while ($i <= $getLimit) {
-    $dwObservations = Array();
 
     $data = getObsArr_basedOnId($idAbove, $perPage);
 
@@ -197,7 +194,6 @@ elseif ("newUpdate" == $_GET['mode']) {
   // Per GET
   while ($i <= $getLimit) {
 
-    $dwObservations = Array();
     log2("D", "$idAbove, $perPage, $updatedSince", "log/inat-obs-log.log");
 
     $data = getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince);
@@ -259,7 +255,6 @@ elseif ("fullUpdate" == $_GET['mode']) {
 
   // Per GET
   while ($i <= $getLimit) {
-    $dwObservations = Array();
 
     $data = getObsArr_basedOnId($idAbove, $perPage);
 
@@ -364,7 +359,6 @@ function deleteNonUpdated($database) {
     deleteFromApiTest($documentId);
 
     /*
-    $dwObservations = Array();
     $documentId = "http://tun.fi/HR.3211/" . $id;
     $documentId = "https://www.inaturalist.org/observations/" . $id; // old format, needed to delete old observations
 
@@ -481,7 +475,7 @@ function logObservationsToDatabase($observations, $status, $database) {
 }
 
 function compileDwJson($dwObservations) {
-  $dwRoot = Array();
+
   $dwRoot['schema'] = "laji-etl";
   $dwRoot['roots'] = $dwObservations;
   $dwJson = json_encode($dwRoot);
