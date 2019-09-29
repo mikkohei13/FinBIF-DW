@@ -12,7 +12,7 @@ echo "START\n";
 log2("START", "------------------------------------------", "log/inat-obs-log.log");
 
 // Check that params are set
-// todo: key is not needed for newUpdate
+// todo: key is not needed for newUpdate & fullUpdate
 if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination'])) {
   exit ("Exited due to missing parameters.");
 }
@@ -30,11 +30,9 @@ if (!$database) {
   exit("Exited due to database connection error");
 }
 
-// todo: log errors locally, so that I know if some field is missing or something unexpected
-// todo try catch for conversion?
 /*
 Params
-- MODE: single | all | since last update | all + delete | delete single
+- MODE: single | deleteSingle | manual | newUpdate | fullUpdate
 - DESTINATION: dryrun (just display) | test | prod
 - KEY: id or time to begin *after*
 
@@ -42,21 +40,20 @@ Error handling
 - If error happens:
   - Log error
   - Stop processing with exit()
+- Note: having no observations to submit is not an error, because processing must continue from the next page.
 
 Test values
-key = 33084315; // Violettiseitikki submitted on 20.9.2019
+- normal observation 33084315; (Violettiseitikki submitted on 20.9.2019)
+- deleted observation 33586301 (Hypoxylaceae observed & submitted 29.9.2019)
+- without date & taxon: 30092946
 
 TODO:
-- See push plan in readme
-- Plan options and logic for fullUpload, latestUpload, fullUpdate, delete
 - FIND OUT WHY ID 33068 PERSISTS?!
 - Check that all exit's have logging
-- Add since last update -mode, first using last update time as param
-- Then handle last update time in database
-...
-- all + delete
-- delete single
-
+- See todo's in conversion function
+- create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
+- replace exits with log errors
+- replace mysql error handling with exits
 
 */
 
@@ -82,9 +79,6 @@ if ("single" == $_GET['mode']) {
 
   // This needs to only handle observations submitted to DW, after they have been submitted
   logObservationsToDatabase($databaseObservations, 0, $database);
-
-//  print_r ($dwObservations);
-//  echo hashInatObservation($data['results'][0]);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -102,11 +96,6 @@ elseif ("deleteSingle" == $_GET['mode']) {
   if ("dryrun" != $_GET['destination']) {
     $database->updateStatus($_GET['key'], -1);
   }
-
-//  log2("NOTICE", "Going through observations to be deleted", "log/inat-obs-log.log");
-
-//  $numberOfDeleted = deleteNonUpdated($database); // todo: add idAbove & getLimit (based on page*perpage count), to avoid deleting too much while testing
-//  log2("NOTICE", "Finished deleting $numberOfDeleted observations missing from source", "log/inat-obs-log.log");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -136,10 +125,6 @@ elseif ("manual" == $_GET['mode']) {
 
     // Per observation
     foreach ($data['results'] as $nro => $obs) {
-
-      // todo: add manualSoft & manualHard
-      // todo: if mode = manualSoft
-      // todo: check if already in database with unchanged hash -> don't update
 
       // Convert
       // Todo: log and exit() if error converting
@@ -235,7 +220,6 @@ elseif ("newUpdate" == $_GET['mode']) {
 // ------------------------------------------------------------------------------------------------
 // FULLUPDATE
 // This will run through all observations, and A) updates only changed obs and 2) Marks which observations have been deleted.
-// Test: deleted observtion 33586301 (Hypoxylaceae 29.9.2019)
 
 elseif ("fullUpdate" == $_GET['mode']) {
   $allHandled = FALSE; // todo: use this in all modes?
@@ -281,12 +265,6 @@ elseif ("fullUpdate" == $_GET['mode']) {
         // Push obs to DW and log to db
         // This covers both old and new obs in DW
 
-        /*
-        Todo:
-        - Save each obs status = 1 into db separately
-        - At the end, set status 0 -> 2 & 1 -> 0
-        */
-
         // Convert
         // Todo: log and exit() if error converting
         $dwObs = observationInat2Dw($obs);
@@ -295,9 +273,6 @@ elseif ("fullUpdate" == $_GET['mode']) {
           $databaseObservations[] = $obs;
         }
       }
-
-      // Push to db
-//      $database->push($id, $hash, 1); // ABBA
 
       // Prepare for next observation
       $idAbove = $obs['id'];
@@ -421,15 +396,11 @@ function compileDwJson($dwObservations) {
   $dwRoot['roots'] = $dwObservations;
   $dwJson = json_encode($dwRoot);
 
-//  echo "\nHERE'S JSON\n" . $dwJson . "\n"; // debug
   return $dwJson;
 }
 
 function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
-
 //  https://api.inaturalist.org/v1/observations?updated_since=2019-09-25T18%3A00%3A00&order=desc&order_by=created_at
-
-//  $updatedSince = str_replace(":", "%3A", $updatedSince);
 
   $updatedSince = urlencode($updatedSince);
 

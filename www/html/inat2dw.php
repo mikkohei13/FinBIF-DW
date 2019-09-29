@@ -7,10 +7,7 @@ function observationInat2Dw($inat) {
 
   $dw = Array();
 
-  /*
-  Example obs:
-  - without date and taxon: https://www.inaturalist.org/observations/30092946
-  
+  /*  
   This expects that certain observations are filtered out in the API call:
   - Non-Finnish. If this is exapanded to other countries, remove hard-coded country name. Also note that country name may be in any language or abbreviation (Finland, FI, Suomi...).
   - Observations without license
@@ -18,6 +15,7 @@ function observationInat2Dw($inat) {
   - without_taxon_id: [human id] (todo: remove human filter here)
   
   Todo:
+  - filter out mikkohei13's observations (will e duplicates)
   - harmonize grade names in keywords and facts
   - Decide what to do with unit and gathering id's. Gut feeling (24.9.2019: Create a new, since iNat has not officially declared that the uri is an identifier. GBIF just acts like it is.)
   - Check that all fields are shown on dw
@@ -26,7 +24,7 @@ function observationInat2Dw($inat) {
   - Filter mikkohei13 observations (will be duplicates, but have images...)
 
   Ask Esko:
-  - Showing license uri on viewer, list, file download?
+  - Quality fields
 
   Notes:
   - Samalla nimellä voi olla monta faktaa

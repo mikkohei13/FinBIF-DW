@@ -203,8 +203,6 @@ function hashInatObservation($inat) {
     return "not an array, " . time();
   }
 
-//  print_r ($inat);
-
   unset($inat['place_ids']);
 
   $inat['moved']['taxonName'] = $inat['taxon']['name'];
