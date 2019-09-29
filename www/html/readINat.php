@@ -395,27 +395,6 @@ function pushToEcho($data) {
   return NULL;
 }
 
-/*
-function pushToTestDw($dwObservations) {
-  log2("NOTICE", "Pushing to test DW", "log/inat-obs-log.log");
-  echo "PUSHING TO TEST DW...\n\n";
-
-  // Compile json file to be sent
-  $dwJson = compileDwJson($dwObservations);
-
-  $response = postToAPItest($dwJson);
-  // todo: move error handling to mysql? see delete method.
-  if (200 == $response['http_code']) {
-    log2("SUCCESS", "API responded " . $response['http_code'], "log/inat-obs-log.log");
-  }
-  else {
-    log2("ERROR", "API responded " . $response['http_code'] . " / " . json_encode($response), "log/inat-obs-log.log");
-    exit("Exited due to error POSTing to API. See log for details.");
-  }
-  return NULL;
-}
-*/
-
 function logObservationsToDatabase($observations, $status, $database) {
   /*
   Statuses:
