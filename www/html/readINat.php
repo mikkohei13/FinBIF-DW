@@ -343,44 +343,6 @@ $database->close();
 // ------------------------------------------------------------------------------------------------
 // FUNCTIONS
 
-function deleteNonUpdated($database) {
-  // todo: delete from api, update database
-  $count = 0;
-
-  // Get id's that were not updated
-  $nonUpdatedIds = $database->getNonUpdatedIds();
-  print_r ($nonUpdatedIds); // debug
-
-  foreach ($nonUpdatedIds as $nro => $id) {
-
-    // API delete $id
-
-    $documentId = "http://tun.fi/HR.3211/" . $id;
-    deleteFromApiTest($documentId);
-
-    /*
-    $documentId = "http://tun.fi/HR.3211/" . $id;
-    $documentId = "https://www.inaturalist.org/observations/" . $id; // old format, needed to delete old observations
-
-//    $dwObservations[0]['sourceId'] = "http://tun.fi/KE.901";
-//    $dwObservations[0]['documentId'] = $documentId;
-    $dwObservations[0]['publicDocument']['documentId'] = $documentId;
-    $dwObservations[0]['publicDocument']['deleteRequest'] = TRUE;
-    $dwJson = compileDwJson($dwObservations);
-    postToAPItest($dwJson);
-    */
-    log2("NOTICE", "Sent DELETE request to API for " . $documentId, "log/inat-obs-log.log");
-
-    // Set trashed in database
-    $database->updateStatus($id, -1);
-
-    $count++;
-    break; // debug: break after one observation
-  }
-
-  return $count;
-}
-
 function deleteFactory($documentId, $destination) {
   if ("dryrun" == $destination) {
     pushToEcho($documentId);
