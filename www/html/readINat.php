@@ -14,21 +14,18 @@ log2("START", "------------------------------------------", "log/inat-obs-log.lo
 // Check that params are set
 // todo: key is not needed for newUpdate & fullUpdate
 if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination'])) {
-  exit ("Exited due to missing parameters.");
+  log2("ERROR", "Missing parameters", "log/inat-obs-log.log");
 }
 
 // Allow dryrun only on single & deleteSingle, to avoid misunderstandings
 if ("dryrun" == $_GET['destination']) {
   if ("single" != $_GET['mode'] && "deleteSingle" != $_GET['mode'])
-  exit("Dryrun is only allowed with mode=single|deleteSingle");
+  log2("ERROR", "Dryrun is only allowed with mode=single|deleteSingle", "log/inat-obs-log.log");
 }
 
 const SLEEP_SECONDS = 5;
 
 $database = new mysqlDb("inat_push");
-if (!$database) {
-  exit("Exited due to database connection error");
-}
 
 /*
 Params
@@ -37,9 +34,7 @@ Params
 - KEY: id or time to begin *after*
 
 Error handling
-- If error happens:
-  - Log error
-  - Stop processing with exit()
+- If error happens, log the error, which also exits the script
 - Note: having no observations to submit is not an error, because processing must continue from the next page.
 
 Test values
@@ -48,13 +43,11 @@ Test values
 - without date & taxon: 30092946
 
 TODO:
+- Why new updates are not going through to DW?
 - Test if while doing newUpdate FinBIF DW responds other than 200, will the obs be pushed again later?
 - FIND OUT WHY ID 33068 PERSISTS?!
-- Check that all exit's have logging
 - See todo's in conversion function
 - create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
-- replace exits with log errors
-- replace mysql error handling with exits
 - Licence change should trigger hash change
 
 */
@@ -129,7 +122,6 @@ elseif ("manual" == $_GET['mode']) {
     foreach ($data['results'] as $nro => $obs) {
 
       // Convert
-      // Todo: log and exit() if error converting
       $dwObs = observationInat2Dw($obs);
       if ($dwObs) {
         $dwObservations[] = $dwObs;
@@ -161,8 +153,8 @@ elseif ("newUpdate" == $_GET['mode']) {
 
   $perPage = 10;
 
-  $getLimit = 1000;// High getLimit in production, should be enough if this is run daily
-  $getLimit = 10; // debug
+  $getLimit = 100;// High getLimit in production, should be enough for a long time if this is run daily
+  $getLimit = 10; // Debug, must always be >1, otherwise database time will not be set
 
   log2("NOTICE", "Started: newUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
 
@@ -196,7 +188,6 @@ elseif ("newUpdate" == $_GET['mode']) {
     foreach ($data['results'] as $nro => $obs) {
 
       // Convert
-      // Todo: log and exit() if error converting
       $dwObs = observationInat2Dw($obs);
       if ($dwObs) {
         $dwObservations[] = $dwObs;
@@ -269,7 +260,6 @@ elseif ("fullUpdate" == $_GET['mode']) {
         // This covers both old and new obs in DW
 
         // Convert
-        // Todo: log and exit() if error converting
         $dwObs = observationInat2Dw($obs);
         if ($dwObs) {
           $dwObservations[] = $dwObs;
@@ -330,7 +320,7 @@ function deleteFactory($documentId, $destination) {
   }
   // Todo here: Push to production
   else {
-    exit("Exited due to unknown destination value");
+    log2("ERROR", "Unknown destination value", "log/inat-obs-log.log");
   }
   return NULL;
 }
@@ -353,7 +343,7 @@ function pushFactory($data, $destination) {
   }
   // Todo here: Push to production
   else {
-    exit("Exited due to unknown destination value");
+    log2("ERROR", "Unknown destination value", "log/inat-obs-log.log");
   }
   return NULL;
 }
@@ -384,10 +374,7 @@ function logObservationsToDatabase($observations, $status, $database) {
 
   foreach ($observations as $nro => $obs) {
     $hash = hashInatObservation($obs);
-    $result = $database->push($obs['id'], $hash, $status);
-    if (!$result) {
-      log2("ERROR", "Database error " . $database->error, "log/inat-obs-log.log");
-    }
+    $database->push($obs['id'], $hash, $status);
   }
 
   return NULL;
