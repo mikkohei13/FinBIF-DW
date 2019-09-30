@@ -15,7 +15,7 @@ CREATE TABLE `latest_update` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_swedish_ci;
 
 INSERT INTO `latest_update` (`id`, `observation_id`, `latest_update`) VALUES
-(0,	0,	'2019-09-30T00:00:00+03:00');
+(1,	0,	'2019-09-30T00:00:00+03:00');
 
 DROP TABLE IF EXISTS `observations`;
 CREATE TABLE `observations` (
