@@ -69,14 +69,8 @@ function removeNullFalse($var) {
 
 // Handle special taxa
 function handleTaxon($taxon) {
-  if ("Life" === $taxon) {
+  if ("Life" === $taxon || "" === $taxon || "unknown" === $taxon || FALSE === $taxon || NULL === $taxon) {
     return "Biota";
-  }
-  elseif ("unknown" === $taxon) { // This should not be possible, but just in case handle it here...
-    return "";
-  }
-  else {
-    return removeNullFalse($taxon);
   }
 }
 
