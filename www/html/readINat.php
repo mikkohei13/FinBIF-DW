@@ -48,12 +48,14 @@ Test values
 - without date & taxon: 30092946
 
 TODO:
+- Test if while doing newUpdate FinBIF DW responds other than 200, will the obs be pushed again later?
 - FIND OUT WHY ID 33068 PERSISTS?!
 - Check that all exit's have logging
 - See todo's in conversion function
 - create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
 - replace exits with log errors
 - replace mysql error handling with exits
+- Licence change should trigger hash change
 
 */
 
@@ -220,6 +222,7 @@ elseif ("newUpdate" == $_GET['mode']) {
 // ------------------------------------------------------------------------------------------------
 // FULLUPDATE
 // This will run through all observations, and A) updates only changed obs and 2) Marks which observations have been deleted.
+// This mode is the only one to get updates of old observations which have switched to open licenses
 
 elseif ("fullUpdate" == $_GET['mode']) {
   $allHandled = FALSE; // todo: use this in all modes?
