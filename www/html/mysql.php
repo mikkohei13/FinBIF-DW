@@ -98,12 +98,14 @@ class mysqlDb
 
         if ($result) {
             $arr = mysqli_fetch_assoc($result);
+            if (empty($arr['latest_update'])) {
+                $this->log2("ERROR", "Error gerring latest update time: time is empty", "log/inat-obs-log.log");
+            }
             $this->log2("NOTICE", "Got latest update from db: latest_update " . $arr['latest_update'] . ", observation_id: " . $arr['observation_id'], "log/inat-obs-log.log");
             return $arr['latest_update'];
         }
         else {
-            $this->error = "Error getting latest_update time: " . $this->conn->error;
-            return FALSE;
+            $this->log2("ERROR", "Error getting latest update time: " . $this->error, "log/inat-obs-log.log");
         }
     }
 
