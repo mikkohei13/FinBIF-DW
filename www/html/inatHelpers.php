@@ -10,7 +10,7 @@ function stringReverse($string) {
 function factsArrayPush($factsArr, $level, $fact, $value, $preserveZeroAndFalse = FALSE) {
 
   if ($level !== "D" && $level !== "G" && $level !== "U") {
-    exit("Error: Level must be D, G or U");
+    log2("ERROR", "Level must be D, G or U", "log/inat-obs-log.log");
   }
 //  echo $fact .":". $value; // debug
 
