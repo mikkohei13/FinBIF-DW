@@ -7,7 +7,7 @@ function observationInat2Dw($inat) {
 
   $dw = Array();
 
-  /*  
+  /*
   This expects that certain observations are filtered out in the API call:
   - Non-Finnish. If this is exapanded to other countries, remove hard-coded country name. Also note that country name may be in any language or abbreviation (Finland, FI, Suomi...).
   - Observations without license
@@ -15,14 +15,10 @@ function observationInat2Dw($inat) {
   - without_taxon_id: [human id] (todo: remove human filter here)
   
   Todo:
-  - Check that spam filtering is done
   - filter out mikkohei13's observations (will e duplicates)
-  - harmonize grade names in keywords and facts
-  - Decide what to do with unit and gathering id's. Gut feeling (24.9.2019: Create a new, since iNat has not officially declared that the uri is an identifier. GBIF just acts like it is.)
   - Check that all fields are shown on dw
   - Check that all non-meta data is under public document
   - Quality metrics & quality grade (casual, research) affecting quality fields in DW
-  - Filter mikkohei13 observations (will be duplicates, but have images...)
 
   Ask Esko:
   - Quality fields
@@ -270,7 +266,7 @@ function observationInat2Dw($inat) {
 
 
   // Quality grade
-  $factsArr = factsArrayPush($factsArr, "U", "quality_grade", $inat['quality_grade']);
+  $factsArr = factsArrayPush($factsArr, "U", "quality_grade", $inat['quality_grade'] . "_grade");
   array_push($keywordsArr, $inat['quality_grade'] . "_grade");
 
 
@@ -279,12 +275,12 @@ function observationInat2Dw($inat) {
 
   
   // Misc facts
-  $factsArr = factsArrayPush($factsArr, "G", "out_of_range", $inat['out_of_range'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "D", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "D", "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "D", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "D", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "D", "comments_count", $inat['comments_count'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "out_of_range", $inat['out_of_range'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "comments_count", $inat['comments_count'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_agreements", $inat['num_identification_agreements'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
 //  $factsArr = factsArrayPush($factsArr, "U", "identifications_most_agree", $inat['identifications_most_agree']);
