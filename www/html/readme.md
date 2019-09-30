@@ -30,6 +30,7 @@ Todo:
 Possibly todo later:
 
 - Create a FInBIF project on iNat, ask to share observations to that project. Then authenticate when fetching the data, using a user that has adming rights to the project. This way we could get exact coordinates of obscured observations. Then these must be secured on the FinBIF API also.
+- Catch conversion warnings etc. and stop processing (or at least log the problem)
 - Locality names from place_ids. Probably too much hassle.
 - Remove suspended user's observations
 - Orcid
