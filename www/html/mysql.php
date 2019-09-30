@@ -51,9 +51,7 @@ class mysqlDb
         $this->conn = mysqli_connect($server, $user, $password, $database);
 
         if ($this->conn->connect_error) {
-            $this->error = "Database connection failed: " . $this->conn->connect_error;
-            $this->log2("ERROR", "Database connection failed: " . $database, "log/inat-obs-log.log"); 
-            return FALSE;
+            $this->log2("ERROR", "Database connection failed: " . $database . " " . $this->conn->connect_error, "log/inat-obs-log.log"); 
         }
         else {
             $this->log2("NOTICE", "Connected to database: " . $database, "log/inat-obs-log.log"); 
@@ -78,9 +76,7 @@ class mysqlDb
             return TRUE;
         }
         else {
-            $this->error = "Error updating latest_update: " . $this->conn->error;
-            $this->log2("D", $this->error, "log/inat-obs-log.log");
-            return FALSE;
+            log2("ERROR", "Error updating latest_update: " . $this->conn->error, "log/inat-obs-log.log");
         }       
     }
 
@@ -126,7 +122,7 @@ class mysqlDb
             return $this->insert($id, $hash, $status);
         }
         else {
-            return FALSE;
+            log2("ERROR", "Error pushing, see insert or update method for errors", "log/inat-obs-log.log");
         }
     }
 
@@ -148,13 +144,11 @@ class mysqlDb
             }
         }
         else {
-            $this->error = "Error finding id: " . $this->conn->error;
-            return FALSE;
+            log2("ERROR", "Error finding id: " . $this->conn->error, "log/inat-obs-log.log");
         }
     }
 
     public function doesHashExist($id, $hash) {
-        $this->log2("D", "Searching for id $id, hash $hash", "log/inat-obs-log.log");
 
         $sql = "
         SELECT id FROM observations 
@@ -169,25 +163,20 @@ class mysqlDb
         if ($result) {
             $rowCount = mysqli_num_rows($result);
             if ($rowCount > 0) {
-//                $this->log2("D", "FOUND", "log/inat-obs-log.log");
                 return TRUE;
             }
             else {
-//                $this->log2("D", "NOT FOUND", "log/inat-obs-log.log");
                 return FALSE;
             }
         }
         else {
-//            $this->log2("D", "ERROR", "log/inat-obs-log.log");
-            $this->error = "Error finding hash: " . $this->conn->error;
-            return FALSE;
+            $this->log2("ERROR", "Error finding hash: " . $this->conn->error, "log/inat-obs-log.log");
         }
     }
 
     public function update($id, $hash = "", $status = "") {
         $timestamp = time();
 
-        // todo: data security / prepared statements
         $sql = "
         UPDATE observations
         SET
@@ -198,12 +187,10 @@ class mysqlDb
         ";
 
         if ($this->conn->query($sql)) {
-            // todo: log
             return TRUE;
         }
         else {
-            $this->error = "Error updating record: " . $this->conn->error;
-            return FALSE;
+            $this->log2("ERROR", "Error updating record: " . $this->conn->error, "log/inat-obs-log.log");
         }
     }
 
@@ -224,9 +211,7 @@ class mysqlDb
             return TRUE;
         }
         else {
-            $this->error = "Error updating record: " . $this->conn->error;
             $this->log2("ERROR", "Trashing $id from database failed", "log/inat-obs-log.log"); 
-            return FALSE;
         }
     }
 
@@ -245,9 +230,7 @@ class mysqlDb
             return TRUE;
         }
         else {
-            $this->error = "Error updating record: " . $this->conn->error;
-            $this->log2("NOTICE", "Setting 0 to 2 in failed", "log/inat-obs-log.log"); 
-            return FALSE;
+            $this->log2("ERROR", "Setting 0 to 2 in failed: " . $this->conn->error, "log/inat-obs-log.log"); 
         }
     }
 
@@ -266,9 +249,7 @@ class mysqlDb
             return TRUE;
         }
         else {
-            $this->error = "Error updating record: " . $this->conn->error;
-            $this->log2("NOTICE", "Setting 1 to 0 in failed", "log/inat-obs-log.log"); 
-            return FALSE;
+            $this->log2("ERROR", "Setting 1 to 0 in failed: " . $this->conn->error, "log/inat-obs-log.log"); 
         }
     }
 
@@ -286,12 +267,10 @@ class mysqlDb
 //f        echo $sql;
 
         if ($this->conn->query($sql)) {
-            // todo: log
             return TRUE;
         }
         else {
-            $this->error = "Error inserting record: " . $this->conn->error;
-            return FALSE;
+            $this->log2("ERROR", "Error inserting record: " . $this->conn->error, "log/inat-obs-log.log"); 
         }
     }
  
