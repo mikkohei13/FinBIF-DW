@@ -72,6 +72,9 @@ function handleTaxon($taxon) {
   if ("Life" === $taxon || "" === $taxon || "unknown" === $taxon || FALSE === $taxon || NULL === $taxon) {
     return "Biota";
   }
+  else {
+    return $taxon;
+  }
 }
 
 function handleAnnotation($annotation) {

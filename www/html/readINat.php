@@ -43,7 +43,6 @@ Test values
 - without date & taxon: 30092946
 
 TODO:
-- Why new updates are not going through to DW?
 - Test if while doing newUpdate FinBIF DW responds other than 200, will the obs be pushed again later?
 - FIND OUT WHY ID 33068 PERSISTS?!
 - See todo's in conversion function
@@ -151,7 +150,7 @@ elseif ("manual" == $_GET['mode']) {
 
 elseif ("newUpdate" == $_GET['mode']) {
 
-  $perPage = 10;
+  $perPage = 100;
 
   $getLimit = 100;// High getLimit in production, should be enough for a long time if this is run daily
   $getLimit = 10; // Debug, must always be >1, otherwise database time will not be set
