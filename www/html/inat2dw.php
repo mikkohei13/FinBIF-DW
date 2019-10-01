@@ -41,6 +41,13 @@ function observationInat2Dw($inat) {
     return FALSE;
   }
 
+  // Filter mikkohei13's observations (would be duplicates)
+  $vihkoUsers[] = "mikkohei13";
+  if (in_array($inat['user']['login'], $vihkoUsers)) {
+    log2("WARNING", "Skipped observation by Vihko user: user " . $inat['user']['login']. ", obs " . $inat['id'], "log/inat-obs-log.log");
+    return FALSE;
+  }
+
   // Check that is from Finland
   if (!in_array(7020, $inat['place_ids'])) {
     log2("WARNING", "Skipped observation not from Finland: " . $inat['id'], "log/inat-obs-log.log");
