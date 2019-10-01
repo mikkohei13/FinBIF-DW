@@ -52,9 +52,12 @@ Problems when downloading full set to test-DW (1.10.2019)
 
 TODO:
 
-- Filter out mikkohei13's observations (will e duplicates)
+- Filter out mikkohei13's observations (will be duplicates)
 - Quality metrics & quality grade (casual, research) affecting quality fields in DW
-- Create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
+- Create a prod database, select this when connecting to db. Thus no needed for pushFactory & deleteFactory
+- Option to push to production api
+
+- Prepare for iNat long respond times (set timeout to 60 sec?)
 
 Possibly todo later:
 
