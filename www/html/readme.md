@@ -25,15 +25,43 @@ http://localhost/readINat.php?mode=fullUpdate&key=0&destination=test
 Delete a single observation from test-DW:
 http://localhost/readINat.php?mode=deleteSingle&key=33484833&destination=dryrun
 
+Params:
 
-## inat2dw Conversions
+- MODE: single | deleteSingle | manual | newUpdate | fullUpdate
+- DESTINATION: dryrun (just display) | test | prod
+- KEY: id or time to begin *after*
 
-Todo:
+## Notes
 
-- See inat2dw.php file
+Error handling:
+
+- If error happens, log the error, which also exits the script
+- Note: having no observations to submit is not an error, because processing must continue from the next page.
+
+Test values:
+
+- normal observation 33084315; (Violettiseitikki submitted on 20.9.2019)
+- deleted observation 33586301 (Hypoxylaceae observed & submitted 29.9.2019)
+- without date & taxon: 30092946
+
+Problems when downloading full set to test-DW (1.10.2019)
+- iNat API did not respond in 30 sec -> timeout with PHP -> fatal error (?)
+- Temp error in DNS resolution of the iNat API -> script error & exit
+
+## Todo
+
+TODO:
+
+- Filter out mikkohei13's observations (will e duplicates)
+- Quality metrics & quality grade (casual, research) affecting quality fields in DW
+- Create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
 
 Possibly todo later:
 
+- Find out why more entries in database than in DW? (4 missing from database compared to DW)
+- For monthly update, go through the db and get observations from iNat api by their id's
+  - Fetching 100 obs by id's: 16 seconds
+  - Note that /observations/{id} endpoint returns different format than /observations -> need to have different conversion script and different hashing script
 - Create a FInBIF project on iNat, ask to share observations to that project. Then authenticate when fetching the data, using a user that has adming rights to the project. This way we could get exact coordinates of obscured observations. Then these must be secured on the FinBIF API also.
 - Catch conversion warnings etc. and stop processing (or at least log the problem)
 - Locality names from place_ids. Probably too much hassle.

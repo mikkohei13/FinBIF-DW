@@ -27,33 +27,6 @@ const SLEEP_SECONDS = 5;
 
 $database = new mysqlDb("inat_push");
 
-/*
-Params
-- MODE: single | deleteSingle | manual | newUpdate | fullUpdate
-- DESTINATION: dryrun (just display) | test | prod
-- KEY: id or time to begin *after*
-
-Error handling
-- If error happens, log the error, which also exits the script
-- Note: having no observations to submit is not an error, because processing must continue from the next page.
-
-Test values
-- normal observation 33084315; (Violettiseitikki submitted on 20.9.2019)
-- deleted observation 33586301 (Hypoxylaceae observed & submitted 29.9.2019)
-- without date & taxon: 30092946
-
-TODO:
-- Filter out mikkohei13's observations (will e duplicates)
-- Quality metrics & quality grade (casual, research) affecting quality fields in DW
-- Create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
-
-Problems when downloading full set to test-DW (1.10.2019)
-- iNat API did not respond in 30 sec -> timeout with PHP -> fatal error (?)
-- Temp error in DNS resolution of the iNat API -> script error & exit
-
-*/
-
-
 // ------------------------------------------------------------------------------------------------
 // SINGLE
 // This will push single observation to DW
@@ -158,10 +131,10 @@ elseif ("manual" == $_GET['mode']) {
 elseif ("newUpdate" == $_GET['mode']) {
 
   $perPage = 100;
-  $perPage = 2; // Debug
+//  $perPage = 2; // Debug
 
-  $getLimit = 100;// High getLimit in production, should be enough for a long time if this is run daily
-  $getLimit = 2; // Debug, must always be >1, otherwise database time will not be set
+  $getLimit = 10;// High getLimit in production, should be enough for a long time if this is run daily
+//  $getLimit = 2; // Debug, must always be >1, otherwise database time will not be set
 
   log2("NOTICE", "Started: newUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
   if (isset($_GET['key'])) {
@@ -232,10 +205,10 @@ elseif ("fullUpdate" == $_GET['mode']) {
   $allHandled = FALSE;
 
   $perPage = 100; // Production
-  $perPage = 10; // Debug, must always be >1, otherwise database time will not be set
+//  $perPage = 2; // Debug, must always be >1, otherwise database time will not be set
 
-  $getLimit = 10000000; // Production: no getLimit
-  $getLimit = 5; // Debug
+  $getLimit = 1000; // Production: no getLimit
+//  $getLimit = 2; // Debug
 
   log2("NOTICE", "Started: fullUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
 
