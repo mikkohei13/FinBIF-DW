@@ -213,6 +213,8 @@ function hashInatObservation($inat) {
   
   unset($inat['identifications']); // Id's always change id count -> detailed information is not needed for hash
   unset($inat['non_owner_ids']);
+
+//  print_r ($inat); exit(); // Debug: show what is included in the hash
   
   // Hash
   return sha1(serialize($inat));

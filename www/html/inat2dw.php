@@ -13,15 +13,6 @@ function observationInat2Dw($inat) {
   - Observations without license
   - Captive/cultivated 
   - without_taxon_id: [human id] (todo: remove human filter here)
-  
-  Todo:
-  - filter out mikkohei13's observations (will e duplicates)
-  - Check that all fields are shown on dw
-  - Check that all non-meta data is under public document
-  - Quality metrics & quality grade (casual, research) affecting quality fields in DW
-
-  Ask Esko:
-  - Quality fields
 
   Notes:
   - Samalla nimellä voi olla monta faktaa
@@ -197,7 +188,6 @@ function observationInat2Dw($inat) {
     $factsArr = factsArrayPush($factsArr, "U", "imageCount", $photoCount);
   }
 
-
   // Sounds
   $soundCount = count($inat['sounds']);
   if ($soundCount >= 1) {
@@ -209,6 +199,9 @@ function observationInat2Dw($inat) {
     $factsArr = factsArrayPush($factsArr, "U", "audioCount", $soundCount);
   }
 
+  if (FALSE == $soundCount && FALSE == $photoCount) {
+    array_push($keywordsArr, "no_media"); // To search for obs which cannot be verified
+  }
 
   // Tags
   if (!empty($inat['tags'])) {
@@ -276,10 +269,10 @@ function observationInat2Dw($inat) {
   
   // Misc facts
   $factsArr = factsArrayPush($factsArr, "U", "out_of_range", $inat['out_of_range'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE); // todo: this is not always present
+  $factsArr = factsArrayPush($factsArr, "U", "context_geoprivacy", $inat['context_geoprivacy'], FALSE); // todo: this is not always present
+  $factsArr = factsArrayPush($factsArr, "U", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE); // todo: this is not always present
+  $factsArr = factsArrayPush($factsArr, "U", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE); // todo: this is not always present
   $factsArr = factsArrayPush($factsArr, "U", "comments_count", $inat['comments_count'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_agreements", $inat['num_identification_agreements'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
@@ -309,7 +302,7 @@ function observationInat2Dw($inat) {
 
 
   log2("NOTICE", "Converted observation\t" . $inat['id'] . " of " . $inat['taxon']['name'] . " on " . $inat['observed_on_details']['date'], "log/inat-obs-log.log");
-  echo "handled ".$inat['id']."\n"; // debug
+//  echo "handled ".$inat['id']."\n"; // debug
 
 
   return $dw;

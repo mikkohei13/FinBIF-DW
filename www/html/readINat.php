@@ -43,11 +43,13 @@ Test values
 - without date & taxon: 30092946
 
 TODO:
-- Test if while doing newUpdate FinBIF DW responds other than 200, will the obs be pushed again later?
-- FIND OUT WHY ID 33068 PERSISTS?!
-- See todo's in conversion function
-- create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
-- Licence change should trigger hash change
+- Filter out mikkohei13's observations (will e duplicates)
+- Quality metrics & quality grade (casual, research) affecting quality fields in DW
+- Create a prod database, select this when connecting to db. thus not needed in pushFactory & deleteFactory
+
+Problems when downloading full set to test-DW (1.10.2019)
+- iNat API did not respond in 30 sec -> timeout with PHP -> fatal error (?)
+- Temp error in DNS resolution of the iNat API -> script error & exit
 
 */
 
@@ -99,7 +101,7 @@ elseif ("deleteSingle" == $_GET['mode']) {
 elseif ("manual" == $_GET['mode']) {
 
   $perPage = 100;
-  $getLimit = 2;
+  $getLimit = 1000;
 
   log2("NOTICE", "Started: manual with perPage $perPage, getLimit $getLimit, key " . $_GET['key'], "log/inat-obs-log.log");
 
@@ -138,6 +140,11 @@ elseif ("manual" == $_GET['mode']) {
     logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
 
     // Prepare for next round
+    unset($dwObservations);
+    unset($databaseObservations);
+
+    log2("D", "MEM: " . memory_get_usage(), "log/inat-obs-log.log");
+
     $i++;
     sleep(SLEEP_SECONDS); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
@@ -151,11 +158,15 @@ elseif ("manual" == $_GET['mode']) {
 elseif ("newUpdate" == $_GET['mode']) {
 
   $perPage = 100;
+  $perPage = 2; // Debug
 
   $getLimit = 100;// High getLimit in production, should be enough for a long time if this is run daily
-  $getLimit = 10; // Debug, must always be >1, otherwise database time will not be set
+  $getLimit = 2; // Debug, must always be >1, otherwise database time will not be set
 
   log2("NOTICE", "Started: newUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
+  if (isset($_GET['key'])) {
+    log2("WARNING", "Note that key param has no effect in this mode.", "log/inat-obs-log.log");
+  }
 
   // Need to generate update time here, since observations are coming from the API in random order -> cannot use their times
   // todo: timezone depends on server time settings?!
@@ -204,6 +215,9 @@ elseif ("newUpdate" == $_GET['mode']) {
     logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
 
     // Prepare for next round
+    unset($dwObservations);
+    unset($databaseObservations);
+
     $i++;
     sleep(SLEEP_SECONDS); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
@@ -215,13 +229,13 @@ elseif ("newUpdate" == $_GET['mode']) {
 // This mode is the only one to get updates of old observations which have switched to open licenses
 
 elseif ("fullUpdate" == $_GET['mode']) {
-  $allHandled = FALSE; // todo: use this in all modes?
+  $allHandled = FALSE;
 
   $perPage = 100; // Production
-  $perPage = 10; // Debug
+  $perPage = 10; // Debug, must always be >1, otherwise database time will not be set
 
   $getLimit = 10000000; // Production: no getLimit
-  $getLimit = 10; // Debug
+  $getLimit = 5; // Debug
 
   log2("NOTICE", "Started: fullUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
 
@@ -278,6 +292,9 @@ elseif ("fullUpdate" == $_GET['mode']) {
     logObservationsToDatabase($databaseObservations, 1, $database); // todo: 0 = first upload, 1 = update
 
     // Prepare for next round
+    unset($dwObservations);
+    unset($databaseObservations);
+
     $i++;
     sleep(SLEEP_SECONDS); // improve: deduct time it took to run conversion & POST from the target sleep time
   }
@@ -332,7 +349,7 @@ function pushFactory($data, $destination) {
     return FALSE;
   }
 
-  log2("D", "pushFactory called: destination $destination", "log/inat-obs-log.log");
+//  log2("D", "pushFactory called: destination $destination", "log/inat-obs-log.log");
 
   if ("dryrun" == $destination) {
     pushToEcho($data);
