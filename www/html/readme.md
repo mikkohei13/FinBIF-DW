@@ -1,6 +1,11 @@
 
 Tools for ETL from iNaturalist to Laji.fi data warehouse (DW).
 
+## Deployment
+
+- Set limit variables in readiNat.php to production values
+- Set timezone to what is used in the container/server
+
 ## Usage
 
 In all cases, make sure hardcded debug settings are first removed.

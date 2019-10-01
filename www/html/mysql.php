@@ -69,8 +69,6 @@ class mysqlDb
         WHERE id = 1;
         ";
 
-//        echo $sql;
-
         if ($this->conn->query($sql)) {
             $this->log2("NOTICE", "Logged to database: latest_update $updateStartedTime, observation_id = $idAbove", "log/inat-obs-log.log");
             return TRUE;
@@ -82,7 +80,6 @@ class mysqlDb
 
     public function getLatestUpdate() {
 
-        // todo: data security / prepared statements
         $sql = "
         SELECT latest_update,
                 observation_id
@@ -197,7 +194,6 @@ class mysqlDb
     public function updateStatus($id, $status) {
         $timestamp = time();
 
-        // todo: data security / prepared statements
         $sql = "
         UPDATE observations
         SET
@@ -218,7 +214,6 @@ class mysqlDb
     public function set0to2() {
         $timestamp = time();
 
-        // todo: data security / prepared statements
         $sql = "
         UPDATE observations
         SET status = 2
@@ -237,7 +232,6 @@ class mysqlDb
     public function set1to0() {
         $timestamp = time();
 
-        // todo: data security / prepared statements
         $sql = "
         UPDATE observations
         SET status = 0
@@ -256,15 +250,12 @@ class mysqlDb
     public function insert($id, $hash = "", $status = "") {
         $timestamp = time();
 
-        // todo: data security / prepared statements
         $sql = "
         INSERT INTO observations 
             (id, hash, timestamp, status)
         VALUES
             ($id, '$hash', $timestamp, $status);
         ";
-
-//f        echo $sql;
 
         if ($this->conn->query($sql)) {
             return TRUE;
