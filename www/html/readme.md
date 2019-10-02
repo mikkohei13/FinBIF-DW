@@ -53,12 +53,6 @@ Problems when downloading full set to test-DW (1.10.2019)
 TODO:
 
 - Quality metrics & quality grade (casual, research) affecting quality fields in DW
-- Create a prod database, select this when connecting to db. Thus no needed for pushFactory & deleteFactory
-  - Select when connecting to db. Don't connect with dryrun.
-- Option to push to production api
-  - Using if/else ($_GET['destination']) set global push url with key in the beginning of postToAPI.
-  - rethink dryrun logic, remove factories?
-
 - Prepare for iNat long respond times (set timeout to 60 sec?)
 
 Possibly todo later:

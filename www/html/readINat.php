@@ -7,9 +7,11 @@ require_once "mysql.php";
 require_once "_secrets.php";
 require_once "postToAPI.php";
 
-echo "<pre>";
-echo "START\n";
-log2("START", "------------------------------------------", "log/inat-obs-log.log");
+const SLEEP_SECONDS = 5;
+
+
+// ------------------------------------------------------------------------------------------------
+// CHECK PARAM VALIDITY
 
 // Check that params are set
 // todo: key is not needed for newUpdate & fullUpdate
@@ -23,9 +25,28 @@ if ("dryrun" == $_GET['destination']) {
   log2("ERROR", "Dryrun is only allowed with mode=single|deleteSingle", "log/inat-obs-log.log");
 }
 
-const SLEEP_SECONDS = 5;
+// ------------------------------------------------------------------------------------------------
+// STARTUP
 
-$database = new mysqlDb("inat_push");
+echo "<pre>";
+
+if ("test" == $_GET['destination']) {
+  startupMsg("STARTED TEST RUN...");
+  $database = new mysqlDb("inat_push");
+  $apiRoot = "https://apitest.laji.fi/v0/warehouse/push?access_token=" . APITEST_ACCESS_TOKEN;
+}
+elseif ("production" == $_GET['destination']) {
+  startupMsg("STARTED PRODUCTION RUN...");
+  $database = new mysqlDb("inat_push_production");
+  $apiRoot = "https://api.laji.fi/v0/warehouse/push?access_token=" . API_ACCESS_TOKEN;
+}
+elseif ("dryrun" == $_GET['destination']) {
+  startupMsg("STARTED DRYRUN...");
+}
+else {
+  startupMsg("STARTED UNKNOWN...");
+  log2("ERROR", "Unknown destination value", "log/inat-obs-log.log");
+}
 
 // ------------------------------------------------------------------------------------------------
 // SINGLE
@@ -33,6 +54,10 @@ $database = new mysqlDb("inat_push");
 
 if ("single" == $_GET['mode']) {
   log2("NOTICE", "Started: single " . $_GET['key'], "log/inat-obs-log.log");
+
+  // Needed in case there are no observations
+  $dwObservations = Array();
+  $databaseObservations = Array();
 
   $data = getObsArr_singleId($_GET['key']);
 
@@ -43,10 +68,9 @@ if ("single" == $_GET['mode']) {
     $databaseObservations[] = $obs;
   }
 
-  $dwJson = compileDwJson($dwObservations);
-  pushFactory($dwJson, $_GET['destination']);
+  pushFactory($dwObservations, $_GET['destination']);
 
-  // This needs to only handle observations submitted to DW, after they have been submitted
+  // This only handles observations submitted to DW, after they have been submitted
   logObservationsToDatabase($databaseObservations, 0, $database);
 }
 
@@ -78,6 +102,10 @@ elseif ("manual" == $_GET['mode']) {
 
   log2("NOTICE", "Started: manual with perPage $perPage, getLimit $getLimit, key " . $_GET['key'], "log/inat-obs-log.log");
 
+  // Needed in case there are no observations
+  $dwObservations = Array();
+  $databaseObservations = Array();
+
   $idAbove = $_GET['key'];
 
   $i = 1;
@@ -106,8 +134,7 @@ elseif ("manual" == $_GET['mode']) {
       $idAbove = $obs['id'];
     }
 
-    $dwJson = compileDwJson($dwObservations);
-    pushFactory($dwJson, $_GET['destination']);
+    pushFactory($dwObservations, $_GET['destination']);
 
     // Log after push if successful
     logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
@@ -136,7 +163,12 @@ elseif ("newUpdate" == $_GET['mode']) {
   $getLimit = 10;// High getLimit in production, should be enough for a long time if this is run daily
 //  $getLimit = 2; // Debug, must always be >1, otherwise database time will not be set
 
+  // Needed in case there are no observations
+  $dwObservations = Array();
+  $databaseObservations = Array();
+
   log2("NOTICE", "Started: newUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
+
   if (isset($_GET['key'])) {
     log2("WARNING", "Note that key param has no effect in this mode.", "log/inat-obs-log.log");
   }
@@ -181,8 +213,7 @@ elseif ("newUpdate" == $_GET['mode']) {
       $idAbove = $obs['id'];
     }
 
-    $dwJson = compileDwJson($dwObservations);
-    pushFactory($dwJson, $_GET['destination']);
+    pushFactory($dwObservations, $_GET['destination']);
 
     // Log after push if successful
     logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
@@ -209,6 +240,10 @@ elseif ("fullUpdate" == $_GET['mode']) {
 
   $getLimit = 1000; // Production: no getLimit
 //  $getLimit = 2; // Debug
+
+  // Needed in case there are no observations
+  $dwObservations = Array();
+  $databaseObservations = Array();
 
   log2("NOTICE", "Started: fullUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
 
@@ -257,9 +292,7 @@ elseif ("fullUpdate" == $_GET['mode']) {
       $idAbove = $obs['id'];
     }
 
-    // PUSH
-    $dwJson = compileDwJson($dwObservations);
-    pushFactory($dwJson, $_GET['destination']);
+    pushFactory($dwObservations, $_GET['destination']);
 
     // Log after push if successful
     logObservationsToDatabase($databaseObservations, 1, $database); // todo: 0 = first upload, 1 = update
@@ -294,7 +327,9 @@ else {
 echo "\n\nEND\n";
 log2("END", "", "log/inat-obs-log.log");
 
-$database->close();
+if (isset($database)) {
+  $database->close();
+}
 
 
 // ------------------------------------------------------------------------------------------------
@@ -302,54 +337,29 @@ $database->close();
 
 function deleteFactory($documentId, $destination) {
   if ("dryrun" == $destination) {
-    pushToEcho($documentId);
+    echo $documentId;
   }
-  elseif ("test" == $destination) {
-    deleteFromApiTest($documentId);
-  }
-  // Todo here: Push to production
   else {
-    log2("ERROR", "Unknown destination value", "log/inat-obs-log.log");
+    deleteFromApi($documentId);
   }
   return NULL;
 }
 
 function pushFactory($data, $destination) {
-  // todo: is there more efficient way to do this? Move json encoding here, to avoid first encoding and then decoding?
-  $arr = json_decode($data, TRUE);
-  if (empty($arr['roots'])) {
+  $json = compileDwJson($data);
+  if (FALSE == $json) {
     log2("NOTICE", "No observations to push ", "log/inat-obs-log.log");
     return FALSE;
   }
-
-//  log2("D", "pushFactory called: destination $destination", "log/inat-obs-log.log");
-
-  if ("dryrun" == $destination) {
-    pushToEcho($data);
-  }
-  elseif ("test" == $destination) {
-    postToAPItest($data);
-  }
-  // Todo here: Push to production
   else {
-    log2("ERROR", "Unknown destination value", "log/inat-obs-log.log");
+    if ("dryrun" == $destination) {
+      print_r ($data);
+    }
+    else {
+      postToApi($json);
+    }
+    return NULL;
   }
-  return NULL;
-}
-
-function pushToEcho($data) {
-  // $data might be json or plain string. We want to display json as an array using print_r()
-  log2("NOTICE", "Dryrun", "log/inat-obs-log.log");
-  echo "DRYRUN...\n\n";
-
-  $decoded = json_decode($data, TRUE);
-  if (is_array($decoded)) {
-    print_r ($decoded);
-  }
-  else {
-    echo $data;
-  }
-  return NULL;
 }
 
 function logObservationsToDatabase($observations, $status, $database) {
@@ -370,12 +380,16 @@ function logObservationsToDatabase($observations, $status, $database) {
 }
 
 function compileDwJson($dwObservations) {
-
-  $dwRoot['schema'] = "laji-etl";
-  $dwRoot['roots'] = $dwObservations;
-  $dwJson = json_encode($dwRoot);
-
-  return $dwJson;
+  // todo: is there more efficient way to do this? Move json encoding here, to avoid first encoding and then decoding?
+  if (empty($dwObservations)) {
+    return FALSE;    
+  }
+  else {
+    $dwRoot['schema'] = "laji-etl";
+    $dwRoot['roots'] = $dwObservations;
+    $dwJson = json_encode($dwRoot);
+    return $dwJson;
+  }
 }
 
 function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
@@ -433,3 +447,9 @@ function checkInatApiError($observationsJson) {
 
   return $observationsArr;
 }
+
+function startupMsg($msg) {
+  echo $msg . "\n";
+  log2("NOTICE", " ... " . $msg . " ... ... ... ... ... ... ... ... ...", "log/inat-obs-log.log");
+}
+

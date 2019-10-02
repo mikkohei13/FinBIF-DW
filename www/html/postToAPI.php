@@ -1,10 +1,10 @@
 <?php
 
-function postToAPItest($json) {
+function postToApi($json) {
   
-  GLOBAL $apitestAccessToken;
+  GLOBAL $apiRoot;
 
-  $apiURL = "https://apitest.laji.fi/v0/warehouse/push?access_token=" . $apitestAccessToken;
+  $apiURL = $apiRoot;
 
   $ch = curl_init($apiURL);
   curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
@@ -26,12 +26,12 @@ function postToAPItest($json) {
   return $curlInfo;
 }
 
-function deleteFromApiTest($documentId) {
+function deleteFromApi($documentId) {
 
-  GLOBAL $apitestAccessToken;
+  GLOBAL $apiRoot;
   $json = json_encode(Array()); // todo: is this needed?
 
-  $apiURL = "https://apitest.laji.fi/v0/warehouse/push?documentId=" . $documentId . "&access_token=" . $apitestAccessToken;
+  $apiURL = $apiRoot . "&documentId=" . $documentId;
   echo $apiURL; // debug
 
   $ch = curl_init($apiURL);

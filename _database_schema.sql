@@ -2,10 +2,11 @@
 
 SET NAMES utf8;
 SET time_zone = '+00:00';
-SET foreign_key_checks = 0;
-SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 SET NAMES utf8mb4;
+
+CREATE DATABASE `inat_push` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_swedish_ci */;
+USE `inat_push`;
 
 DROP TABLE IF EXISTS `latest_update`;
 CREATE TABLE `latest_update` (
@@ -26,4 +27,4 @@ CREATE TABLE `observations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_swedish_ci;
 
 
--- 2019-09-19 12:43:11
+-- 2019-10-01 22:18:04
