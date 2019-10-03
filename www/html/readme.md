@@ -53,7 +53,6 @@ Problems when downloading full set to test-DW (1.10.2019)
 TODO:
 
 - Quality metrics & quality grade (casual, research) affecting quality fields in DW
-- Prepare for iNat long respond times (set timeout to 60 sec?)
 
 Possibly todo later:
 
