@@ -38,6 +38,7 @@ function factsArrayPush($factsArr, $level, $fact, $value, $preserveZeroAndFalse 
   return $factsArr;
 }
 
+// This will calculate the votes of different quality metrics
 function summarizeQualityMetrics($qmArray) {
   $ret = Array();
 

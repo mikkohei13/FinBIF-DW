@@ -15,7 +15,6 @@ const SLEEP_SECONDS = 5;
 // CHECK PARAM VALIDITY
 
 // Check that params are set
-// todo: key is not needed for newUpdate & fullUpdate
 if (!isset($_GET['mode']) || !isset($_GET['key']) || !isset($_GET['destination'])) {
   log2("ERROR", "Missing parameters", "log/inat-obs-log.log");
 }
@@ -138,7 +137,7 @@ elseif ("manual" == $_GET['mode']) {
     pushFactory($dwObservations, $_GET['destination']);
 
     // Log after push if successful
-    logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
+    logObservationsToDatabase($databaseObservations, 0, $database);
 
     // Prepare for next round
     unset($dwObservations);
@@ -175,7 +174,7 @@ elseif ("newUpdate" == $_GET['mode']) {
   }
 
   // Need to generate update time here, since observations are coming from the API in random order -> cannot use their times
-  // todo: timezone depends on server time settings?!
+  // NOTE: Timezone depends on server time settings
   //  $updatedSince = "2019-09-26T00:00:00+03:00"; // debug
   $updateStartedTime = date("Y-m-d") . "T" . date("H:i:s") . "+03:00";
   $updateStartedTime = date("Y-m-d") . "T" . date("H:i:s") . "+00:00"; // Works with the Docker setup
@@ -217,7 +216,7 @@ elseif ("newUpdate" == $_GET['mode']) {
     pushFactory($dwObservations, $_GET['destination']);
 
     // Log after push if successful
-    logObservationsToDatabase($databaseObservations, 0, $database); // todo: 0 = first upload, 1 = update
+    logObservationsToDatabase($databaseObservations, 0, $database);
 
     // Prepare for next round
     unset($dwObservations);
@@ -296,7 +295,7 @@ elseif ("fullUpdate" == $_GET['mode']) {
     pushFactory($dwObservations, $_GET['destination']);
 
     // Log after push if successful
-    logObservationsToDatabase($databaseObservations, 1, $database); // todo: 0 = first upload, 1 = update
+    logObservationsToDatabase($databaseObservations, 1, $database);
 
     // Prepare for next round
     unset($dwObservations);
@@ -381,7 +380,6 @@ function logObservationsToDatabase($observations, $status, $database) {
 }
 
 function compileDwJson($dwObservations) {
-  // todo: is there more efficient way to do this? Move json encoding here, to avoid first encoding and then decoding?
   if (empty($dwObservations)) {
     return FALSE;    
   }

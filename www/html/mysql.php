@@ -1,8 +1,5 @@
 <?php
 
-// todo: test that all methods return proper error data
-// todo: Try/Catch error handling
-
 class mysqlDb
 {
     public $conn = FALSE;
@@ -61,7 +58,6 @@ class mysqlDb
 
     public function setLatestUpdate($idAbove, $updateStartedTime) {
 
-        // todo: this expects that there is entry with id = 1, and silently fails if there is not.
         $sql = "
         UPDATE latest_update
         SET latest_update = '$updateStartedTime',

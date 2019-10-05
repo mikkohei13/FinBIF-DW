@@ -8,7 +8,10 @@ Tools for ETL from iNaturalist to Laji.fi data warehouse (DW).
 
 ## Usage
 
-In all cases, make sure hardcded debug settings are first removed.
+Note:
+- In all cases, make sure hardcded debug settings are first removed.
+- Timezone depends on server time settings. Change if needed (readINat.php).
+
 
 Inspect conversion of a single observation without pusging to DW:
 http://localhost/readINat.php?mode=single&key=33484833&destination=dryrun
@@ -53,20 +56,30 @@ Problems when downloading full set to test-DW (1.10.2019)
 TODO:
 
 - Quality metrics & quality grade (casual, research) affecting quality fields in DW
+- Add check: $database->set_latest_update expects that there is entry with id = 1, and silently fails if there is not.
+
 
 Possibly todo later:
 
-- Find out why more entries in database than in DW? (4 missing from database compared to DW)
-- For monthly update, go through the db and get observations from iNat api by their id's
-  - Fetching 100 obs by id's: 16 seconds
-  - Note that /observations/{id} endpoint returns different format than /observations -> need to have different conversion script and different hashing script
-- Create a FInBIF project on iNat, ask to share observations to that project. Then authenticate when fetching the data, using a user that has adming rights to the project. This way we could get exact coordinates of obscured observations. Then these must be secured on the FinBIF API also.
-- Catch conversion warnings etc. and stop processing (or at least log the problem)
-- Locality names from place_ids. Probably too much hassle.
-- Remove suspended user's observations
-- Orcid
-- Download observation photos of research_grade observations (with no disagreeing identifications) 
-- Observation time (hh:mm)
+- Check:
+  - Find out why more entries in database than in DW? (4 missing from database compared to DW)
+  - Check if traditional and collection projects can have duplicate id's? Low chance of collision with Finnish observations?
+
+- Content:
+  - Create a FInBIF project on iNat, ask to share observations to that project. Then authenticate when fetching the data, using a user that has adming rights to the project. This way we could get exact coordinates of obscured observations. Then these must be secured on the FinBIF API also.
+  - Locality names from place_ids. Probably too much hassle.
+  - Remove suspended user's observations
+  - Orcid
+  - Download cc-licenced observation photos of research_grade observations (with no disagreeing identifications) 
+  - Observation time (hh:mm), though this can be unreliable? (Android app inserts upload time, at least in some cases?)
+
+- Code:
+  - For monthly update, go through the db and get observations from iNat api by their id's
+    - Fetching 100 obs by id's: 16 seconds
+    - Note that /observations/{id} endpoint returns different format than /observations -> need to have different conversion script and different hashing script
+  - More thorough way to check which params are used/allowed
+  - Catch conversion warnings etc. and stop processing (or at least log the problem)
+  - Human filtering via API: Add to all get url's "&without_taxon_id=43584" [human id], then remove human filter from inat2dw, then test.
 
 
 ## Licenses

@@ -12,7 +12,6 @@ function observationInat2Dw($inat) {
   - Non-Finnish. If this is exapanded to other countries, remove hard-coded country name. Also note that country name may be in any language or abbreviation (Finland, FI, Suomi...).
   - Observations without license
   - Captive/cultivated 
-  - without_taxon_id: [human id] (todo: remove human filter here)
 
   Notes:
   - Samalla nimellä voi olla monta faktaa
@@ -98,7 +97,6 @@ function observationInat2Dw($inat) {
   } 
 
   // Quality metrics
-  //todo: esko: where to put these?
   if ($inat['quality_metrics']) {
     $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
     foreach ($qualityMetrics as $key => $value) {
@@ -108,7 +106,6 @@ function observationInat2Dw($inat) {
 
 
   // Projects
-  // todo: do we need to store whether the project is trad/non-trad? Do they share identifier namespace?
   // Non-traditional / Collection (automatic)
   if (isset($inat['non_traditional_projects'])) {
     foreach($inat['non_traditional_projects'] as $projectNro => $project) {
@@ -127,9 +124,9 @@ function observationInat2Dw($inat) {
 
 
   // Dates
-  $dw['publicDocument']['createdDate'] = $inat['created_at_details']['date']; // todo: esko: onko tämä oikea taso?
+  $dw['publicDocument']['createdDate'] = $inat['created_at_details']['date'];
   $updatedDatePieces = explode("T", $inat['updated_at']);
-  $dw['publicDocument']['modifiedDate'] = $updatedDatePieces[0]; // todo: esko: onko tämä oikea taso?
+  $dw['publicDocument']['modifiedDate'] = $updatedDatePieces[0];
 
   $dw['publicDocument']['gatherings'][0]['eventDate']['begin'] = removeNullFalse($inat['observed_on_details']['date']);
   $dw['publicDocument']['gatherings'][0]['eventDate']['end'] = $dw['publicDocument']['gatherings'][0]['eventDate']['begin']; // End is same as beginning
@@ -276,10 +273,10 @@ function observationInat2Dw($inat) {
   
   // Misc facts
   $factsArr = factsArrayPush($factsArr, "U", "out_of_range", $inat['out_of_range'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE); // todo: this is not always present
-  $factsArr = factsArrayPush($factsArr, "U", "context_geoprivacy", $inat['context_geoprivacy'], FALSE); // todo: this is not always present
-  $factsArr = factsArrayPush($factsArr, "U", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE); // todo: this is not always present
-  $factsArr = factsArrayPush($factsArr, "U", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE); // todo: this is not always present
+  $factsArr = factsArrayPush($factsArr, "U", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "comments_count", $inat['comments_count'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_agreements", $inat['num_identification_agreements'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
