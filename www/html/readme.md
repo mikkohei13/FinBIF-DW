@@ -8,25 +8,34 @@ Tools for ETL from iNaturalist to Laji.fi data warehouse (DW).
 
 ## Usage
 
-Note:
+Setup:
+
 - In all cases, make sure hardcded debug settings are first removed.
 - Timezone depends on server time settings. Change if needed (readINat.php).
+- Upload observations using mode=manual
+- Set up crontabs
 
+Modes:
 
 Inspect conversion of a single observation without pusging to DW:
-http://localhost/readINat.php?mode=single&key=33484833&destination=dryrun
+- http://localhost/readINat.php?mode=single&key=33484833&destination=dryrun
+- Only for debug
 
-Push everything to test-DW (this should only dyne once):
-http://localhost/readINat.php?mode=manual&key=0&destination=test
+Push everything to test-DW:
+- http://localhost/readINat.php?mode=manual&key=0&destination=test
+- Only once
 
 Push new observations since last update to test-DW:
-http://localhost/readINat.php?mode=newUpdate&key=0&destination=test
+- http://localhost/readINat.php?mode=newUpdate&key=0&destination=test
+- Crontab 1 hour?
 
 Push all changed observations to test-DW (e.g. monthly):
-http://localhost/readINat.php?mode=fullUpdate&key=0&destination=test
+- http://localhost/readINat.php?mode=fullUpdate&key=0&destination=test
+- Crontab 1 month?
 
 Delete a single observation from test-DW:
-http://localhost/readINat.php?mode=deleteSingle&key=33484833&destination=dryrun
+- http://localhost/readINat.php?mode=deleteSingle&key=33484833&destination=dryrun
+- Only for manual use
 
 Params:
 
@@ -57,6 +66,10 @@ TODO:
 
 - Quality metrics & quality grade (casual, research) affecting quality fields in DW
 - Add check: $database->set_latest_update expects that there is entry with id = 1, and silently fails if there is not.
+- Monitor the process:
+  - Monitor errors on log
+  - Monitor observations waiting for deletion in database (status = 2)
+  - Decide how to continue (possible problems, amount of logs, how much observations to be deleted?)
 
 
 Possibly todo later:
