@@ -37,34 +37,65 @@ class mysqlDb
         $this->conn = mysqli_connect($server, $user, $password, $database);
 
         if ($this->conn->connect_error) {
-            $this->log2("ERROR", "Database connection failed: " . $database . " " . $this->conn->connect_error, "log/inat-obs-log.log"); 
+            $this->log2("ERROR", "Database connection failed: " . $database . " " . $this->conn->connect_error, "log/transactionlog.log"); 
         }
         else {
-            $this->log2("NOTICE", "Connected to database: " . $database, "log/inat-obs-log.log"); 
+            $this->log2("NOTICE", "Connected to database: " . $database, "log/transactionlog.log"); 
             return TRUE;
         }
     }
 
-    private function doesIDExist($target_id) {
+    public function obsInDatabase($target_id, $hash) {
       $sql = "
       SELECT target_id FROM obs_log 
-      WHERE target_id = $target_id;
-      ";
+      WHERE target_id = '$target_id'
+      AND hash = '$hash' 
+      ;";
 
       $result = $this->conn->query($sql);
 
       if ($result) {
           $rowCount = mysqli_num_rows($result);
           if ($rowCount > 0) {
-              return TRUE;
+//            log2("D", "Obs found", "log/transactionlog.log");
+            return TRUE;
           }
           else {
-              return NULL;
+//            log2("D", "Obs NOT found", "log/transactionlog.log");
+            return FALSE;
           }
       }
       else {
-          log2("ERROR", "Error finding id: " . $this->conn->error, "log/inat-obs-log.log");
+          log2("ERROR", "Error finding observation: " . $this->conn->error, "log/transactionlog.log");
       }
+  }
+
+  public function insertObs($source_id, $target_id, $source_json, $target_json, $status, $ts, $hash) {
+
+    $statement = $this->conn->prepare(
+      "
+      INSERT INTO obs_log 
+          (source_id, target_id, source_json, target_json, status, ts, hash)
+      VALUES
+          (?, ?, ?, ?, ?, ?, ?)
+      ;"
+    );
+
+    if (!$statement) {
+      $this->log2("ERROR", "Error inserting record: " . $this->conn->error, "log/transactionlog.log"); 
+    }
+
+    $statement->bind_param("sssssis", $source_id, $target_id, $source_json, $target_json, $status, $ts, $hash);
+    $success = $statement->execute();
+
+    if ($success) {
+      return TRUE;
+    }
+    else {
+        $this->log2("ERROR", "Error inserting record: " . $this->conn->error, "log/transactionlog.log"); 
+    }
+    
+    $statement->close();
   }
 
     /*
@@ -78,11 +109,11 @@ class mysqlDb
         ";
 
         if ($this->conn->query($sql)) {
-            $this->log2("NOTICE", "Logged to database: latest_update $updateStartedTime, observation_id = $idAbove", "log/inat-obs-log.log");
+            $this->log2("NOTICE", "Logged to database: latest_update $updateStartedTime, observation_id = $idAbove", "log/transactionlog.log");
             return TRUE;
         }
         else {
-            log2("ERROR", "Error updating latest_update: " . $this->conn->error, "log/inat-obs-log.log");
+            log2("ERROR", "Error updating latest_update: " . $this->conn->error, "log/transactionlog.log");
         }       
     }
 
@@ -100,13 +131,13 @@ class mysqlDb
         if ($result) {
             $arr = mysqli_fetch_assoc($result);
             if (empty($arr['latest_update'])) {
-                $this->log2("ERROR", "Error gerring latest update time: time is empty", "log/inat-obs-log.log");
+                $this->log2("ERROR", "Error gerring latest update time: time is empty", "log/transactionlog.log");
             }
-            $this->log2("NOTICE", "Got latest update from db: latest_update " . $arr['latest_update'] . ", observation_id: " . $arr['observation_id'], "log/inat-obs-log.log");
+            $this->log2("NOTICE", "Got latest update from db: latest_update " . $arr['latest_update'] . ", observation_id: " . $arr['observation_id'], "log/transactionlog.log");
             return $arr['latest_update'];
         }
         else {
-            $this->log2("ERROR", "Error getting latest update time: " . $this->error, "log/inat-obs-log.log");
+            $this->log2("ERROR", "Error getting latest update time: " . $this->error, "log/transactionlog.log");
         }
     }
 
@@ -121,7 +152,7 @@ class mysqlDb
             return $this->insert($id, $hash, $status);
         }
         else {
-            log2("ERROR", "Error pushing, see insert or update method for errors", "log/inat-obs-log.log");
+            log2("ERROR", "Error pushing, see insert or update method for errors", "log/transactionlog.log");
         }
     }
 
@@ -143,7 +174,7 @@ class mysqlDb
             }
         }
         else {
-            log2("ERROR", "Error finding id: " . $this->conn->error, "log/inat-obs-log.log");
+            log2("ERROR", "Error finding id: " . $this->conn->error, "log/transactionlog.log");
         }
     }
 
@@ -169,7 +200,7 @@ class mysqlDb
             }
         }
         else {
-            $this->log2("ERROR", "Error finding hash: " . $this->conn->error, "log/inat-obs-log.log");
+            $this->log2("ERROR", "Error finding hash: " . $this->conn->error, "log/transactionlog.log");
         }
     }
 
@@ -189,7 +220,7 @@ class mysqlDb
             return TRUE;
         }
         else {
-            $this->log2("ERROR", "Error updating record: " . $this->conn->error, "log/inat-obs-log.log");
+            $this->log2("ERROR", "Error updating record: " . $this->conn->error, "log/transactionlog.log");
         }
     }
 
@@ -205,11 +236,11 @@ class mysqlDb
         ";
 
         if ($this->conn->query($sql)) {
-            $this->log2("NOTICE", "Trashed $id from database", "log/inat-obs-log.log"); 
+            $this->log2("NOTICE", "Trashed $id from database", "log/transactionlog.log"); 
             return TRUE;
         }
         else {
-            $this->log2("ERROR", "Trashing $id from database failed", "log/inat-obs-log.log"); 
+            $this->log2("ERROR", "Trashing $id from database failed", "log/transactionlog.log"); 
         }
     }
 
@@ -223,11 +254,11 @@ class mysqlDb
         ";
 
         if ($this->conn->query($sql)) {
-            $this->log2("NOTICE", "Set 0 to 2 in database", "log/inat-obs-log.log"); 
+            $this->log2("NOTICE", "Set 0 to 2 in database", "log/transactionlog.log"); 
             return TRUE;
         }
         else {
-            $this->log2("ERROR", "Setting 0 to 2 in failed: " . $this->conn->error, "log/inat-obs-log.log"); 
+            $this->log2("ERROR", "Setting 0 to 2 in failed: " . $this->conn->error, "log/transactionlog.log"); 
         }
     }
 
@@ -241,11 +272,11 @@ class mysqlDb
         ";
 
         if ($this->conn->query($sql)) {
-            $this->log2("NOTICE", "Set 1 to 0 in database", "log/inat-obs-log.log"); 
+            $this->log2("NOTICE", "Set 1 to 0 in database", "log/transactionlog.log"); 
             return TRUE;
         }
         else {
-            $this->log2("ERROR", "Setting 1 to 0 in failed: " . $this->conn->error, "log/inat-obs-log.log"); 
+            $this->log2("ERROR", "Setting 1 to 0 in failed: " . $this->conn->error, "log/transactionlog.log"); 
         }
     }
 
@@ -263,7 +294,7 @@ class mysqlDb
             return TRUE;
         }
         else {
-            $this->log2("ERROR", "Error inserting record: " . $this->conn->error, "log/inat-obs-log.log"); 
+            $this->log2("ERROR", "Error inserting record: " . $this->conn->error, "log/transactionlog.log"); 
         }
     }
     */

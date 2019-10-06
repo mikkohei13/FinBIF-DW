@@ -7,8 +7,12 @@ require_once "../log2.php";
 
 $file = "sample_data/stockholm-phanerogamic.csv";
 
+log2("START", "---------------------------------------------", "log/transactionlog.log");
+log2("NOTICE", "Started handling file $file", "log/transactionlog.log");
+
+
 $startTime = time(); // todo: const?
-$limit = 10;
+$limit = 1000;
 $rowNumber = 0;
 $database = new mysqlDb("transactionlog_test");
 
@@ -51,6 +55,8 @@ if (($handle = fopen($file, "r")) !== FALSE) {
   }
 
   fclose($handle);
+
+  log2("END", "Ended", "log/transactionlog.log");
 
 }
 else {
