@@ -2,12 +2,15 @@
 <?php
 
 require_once "dwcObs.php";
+require_once "mysql.php";
 require_once "../log2.php";
 
 $file = "sample_data/stockholm-phanerogamic.csv";
 
+$startTime = time(); // todo: const?
 $limit = 10;
 $rowNumber = 0;
+$database = new mysqlDb("transactionlog_test");
 
 // Read file
 if (($handle = fopen($file, "r")) !== FALSE) {
@@ -19,11 +22,12 @@ if (($handle = fopen($file, "r")) !== FALSE) {
     if (0 == $rowNumber) {
       $colNames = setColNames($row);
       validateFormat($colNames);
+
       $rowNumber++;
       continue;
     }
 
-    $obs = new dwcObs($row, $colNames);
+    $obs = new dwcObs($row, $colNames, $startTime, $database);
 
     // todo: might do: keep track of which fields contain data
 
