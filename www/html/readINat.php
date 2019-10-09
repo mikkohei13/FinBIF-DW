@@ -71,7 +71,9 @@ if ("single" == $_GET['mode']) {
   pushFactory($dwObservations, $_GET['destination']);
 
   // This only handles observations submitted to DW, after they have been submitted
-  logObservationsToDatabase($databaseObservations, 0, $database);
+  if ("dryrun" != $_GET['destination']) {
+    logObservationsToDatabase($databaseObservations, 0, $database);
+  }
 }
 
 // ------------------------------------------------------------------------------------------------

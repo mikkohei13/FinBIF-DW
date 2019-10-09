@@ -252,7 +252,7 @@ function observationInat2Dw($inat) {
   $dw['publicDocument']['gatherings'][0]['team'][0] = $observer;
 
   // Editor & observer id
-  $userId = "KE.901:" . $inat['user']['id'];
+  $userId = "inaturalist:" . $inat['user']['id'];
   $dw['publicDocument']['editorUserIds'][0] = $userId;
   $dw['publicDocument']['gatherings'][0]['observerUserIds'][0] = $userId;
 
