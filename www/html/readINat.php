@@ -162,7 +162,7 @@ elseif ("newUpdate" == $_GET['mode']) {
   $perPage = 100;
 //  $perPage = 2; // Debug
 
-  $getLimit = 10;// High getLimit in production, should be enough for a long time if this is run daily
+  $getLimit = 1000;// High getLimit in production, should be enough for a long time if this is run daily
 //  $getLimit = 2; // Debug, must always be >1, otherwise database time will not be set
 
   // Needed in case there are no observations

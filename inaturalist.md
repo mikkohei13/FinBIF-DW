@@ -3,30 +3,15 @@ Tools for accessing iNaturalist API.
 
 # TODO:
 
-- Learn the API and how to fetch new and updated observations
+- include copyrighted observations, but without images
+- Include own observations
+- Include image links for cc-images
+- Convert to a terminal command?
 - Compare Finnish names to Laji.fi names
   - Compare iNat Finnish names to Laji.fi Finnish names, by connecting them with sciname
   - How many of Finnish species are found in the taxonony, and how many of them have names?
 
 # Notes
-
-Observations, all grades (25.8.2019)
-- Finland 18722 (c. 5% marked as captive/cultivated - do we want these also? No.)
-- Estonia 3425
-- Sweden 35828
-- Norway 30872
-- Russia (are these areas overlapping?)
-  - Republic of Karelia 6587 (bounding box, includes some of Finland also)
-  - Murmansk Oblast 1223
-  - Leningrad Oblast 10641 (bounding box) 
-- Total c. 107,000
-
-Licenses?
-
-Data export tool: https://www.inaturalist.org/observations/export
-quality_grade=any&identifications=any&captive=false&place_id=118841
-
-There are two API's:
 
 ## Write-Read API
 
@@ -50,6 +35,26 @@ Multiple values for a single URL parameter should be separated by commas, e.g. t
 Authentication in the Node API is handled via JSON Web Tokens (JWT). To obtain one, make an OAuth-authenticated request to https://www.inaturalist.org/users/api_token. Each JWT will expire after 24 hours. Authentication required for all PUT and POST requests. Some GET requests will also include private information like hidden coordinates if the authenticated user has permission to view them.
 
 API is intended to support application development, not data scraping.
+
+## Misc
+
+Observations, all grades (25.8.2019)
+- Finland 18722 (c. 5% marked as captive/cultivated - do we want these also? No.)
+- Estonia 3425
+- Sweden 35828
+- Norway 30872
+- Russia (are these areas overlapping?)
+  - Republic of Karelia 6587 (bounding box, includes some of Finland also)
+  - Murmansk Oblast 1223
+  - Leningrad Oblast 10641 (bounding box) 
+- Total c. 107,000
+
+Data export tool: https://www.inaturalist.org/observations/export
+quality_grade=any&identifications=any&captive=false&place_id=118841
+
+There are two API's:
+
+
 
 https://api.inaturalist.org/v1/docs/#!/Observations/get_observations
 
@@ -89,14 +94,19 @@ CC-BY-NC-SA 595
 CC-BY-NC-ND 30
 no license (calculated from total) 5721 (28%)
 
-## DW API
+
+- Annotated photos (5,089 species, 675,000 images) for computer vision training etc.: https://www.kaggle.com/c/inaturalist-challenge-at-fgvc-2017
+- DwCA (400+ MB) of research-grade observations, updated weekly http://www.inaturalist.org/observations/gbif-observations-dwca.zip
+
+
+# DW API
 
 POST /warehouse/push 
 DELETE /warehouse/push 
 
 Push vai custom solution, e.g. with flat nightly updated table?
 
-### Push
+## Push
 - Simple for FinBIF
 - If push fails, system needs to log this, so that can be pushed again later
 - Middleware needs
@@ -119,7 +129,7 @@ Logic:
 - Use try/catch. On failure, write to log. On success, write to log.
 
 
-### Custom pull
+## Custom pull
 - Simpler for source system, can focus on data harmonization
 - If pull fails, DW needs to take care of pulling again, starting from provided datetime
 - Middleware needs:
@@ -127,12 +137,7 @@ Logic:
   - List additions, updates (persistent id) and deletions (persistent id)
 
 
-## See also
-
-- Annotated photos (5,089 species, 675,000 images) for computer vision training etc.: https://www.kaggle.com/c/inaturalist-challenge-at-fgvc-2017
-- DwCA (400+ MB) of research-grade observations, updated weekly http://www.inaturalist.org/observations/gbif-observations-dwca.zip
-
-## Notes about the data
+# Notes about the data
 
 Records have varying CC licenses, or no license at all (=all rights reserved).
 What to do if license is missing, or noncommercial. Remove free text fields? Save free text into field, which is not downloadable?
@@ -230,6 +235,8 @@ description
 num_identification_agreements
 num_identification_disagreements
 captive_cultivated
+
+# How this works?
 
 ## Pushing logic
 
