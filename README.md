@@ -24,3 +24,6 @@ KE.901 - iNaturalist 	315 	315 	0 	0 	19992 	17018 	2974 	0
 Logged to database: latest_update 2020-04-16T08:01:14+00:00, observation_id = 42296794
 
 
+Missing from DW:
+2020-04-16 08:05:49	NOTICE	/var/www/html/inat2dw.php	310	Converted observation	31183581 of Tipulinae on 2019-08-20
+
