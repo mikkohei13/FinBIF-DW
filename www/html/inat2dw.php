@@ -188,8 +188,31 @@ function observationInat2Dw($inat) {
   if ($photoCount >= 1) {
     array_push($keywordsArr, "has_images"); // not needed if we use media object
     foreach ($inat['observation_photos'] as $photoNro => $photo) {
+      
+      // Facts
       $factsArr = factsArrayPush($factsArr, "U", "imageId", $photo['photo']['id']); // Photo id
       $factsArr = factsArrayPush($factsArr, "U", "imageUrl", "https://www.inaturalist.org/photos/" . $photo['photo']['id']); // Photo link
+
+      // Photos via proxy
+      $squareUrl = $photo['photo']['url'];
+
+      $thumbnailUrl = str_replace("square", "small", $squareUrl);
+      $thumbnailUrl = str_replace("https://static.inaturalist.org/photos/", "https://proxy.laji.fi/inaturalist/photos/", $thumbnailUrl); // TODO: refactor into helper
+
+      $fullUrl = str_replace("square", "original", $squareUrl);
+      $fullUrl = str_replace("https://static.inaturalist.org/photos/", "https://proxy.laji.fi/inaturalist/photos/", $fullUrl); // TODO: refactor
+
+      $media = Array();
+
+      $media['thumbnailURL'] = $thumbnailUrl;
+      $media['copyrightOwner'] = $photo['photo']['attribution'];
+      $media['author'] = $photo['photo']['attribution']; // TODO: or simply observer name
+      $media['fullURL'] = $fullUrl;
+      $media['licenseId'] = getLicenseUrl($photo['photo']['license_code']);
+      $media['mediaType'] = "IMAGE";
+
+      $dw['publicDocument']['gatherings'][0]['units'][0]['media'][] = $media;
+
     }
     $factsArr = factsArrayPush($factsArr, "U", "imageCount", $photoCount);
   }

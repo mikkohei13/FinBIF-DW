@@ -15,37 +15,31 @@ Setup:
 - Upload observations using mode=manual
 - Set up crontabs
 
-Modes:
-
-Inspect conversion of a single observation without pusging to DW:
-- http://localhost/readINat.php?mode=single&key=33484833&destination=dryrun
-- Only for debug
-
-Push everything to test-DW:
-- http://localhost/readINat.php?mode=manual&key=0&destination=test
-- Only once
-
-Push new observations since last update to test-DW:
-- http://localhost/readINat.php?mode=newUpdate&key=0&destination=test
-- Crontab 1 hour?
-
-Push all changed observations to test-DW (e.g. monthly):
-- http://localhost/readINat.php?mode=fullUpdate&key=0&destination=test
-- Crontab 1 month?
-
-Delete a single observation from test-DW:
-- http://localhost/readINat.php?mode=deleteSingle&key=33484833&destination=dryrun
-- Only for manual use
-
-Params:
-
-- MODE: single | deleteSingle | manual | newUpdate | fullUpdate
-- DESTINATION: dryrun (just display) | test | prod
-- KEY: id or time to begin *after*
-
-
 
 # How this works?
+
+readInt.php
+- gets params
+- orverall process handling
+
+inatHelpers.php
+- Varous conversion helper functions
+
+log2.php
+- Logger function
+
+inat2dw.php
+- Converts an observation from iNat API format to FinBIF API format, returns it as [json?]
+
+mysql.php
+- Logs handled observations and last fetching date to database
+
+_secrets.php
+
+postToAPI.php
+- Posts json data to FinBIF API using CURL
+
+
 
 ## Pushing logic
 
@@ -132,7 +126,7 @@ Problems when downloading full set to test-DW (1.10.2019)
 
 # Todo
 
-- Convert to a terminal command?
+- Convert to a terminal command? Set modes to _params.php
 - include copyrighted observations, but without images
 - Include own observations
 - Include image links for cc-images via proxy

@@ -191,6 +191,7 @@ function getLicenseUrl($licenseCode) {
       break;
     default:
       $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-NC-ND-4.0"; // Default to strictest license
+//      $ret = "http://tun.fi/MZ.intellectualRightsARR"; // Default to ARR
       break;
   }
   return $ret;
