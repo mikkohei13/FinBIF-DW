@@ -70,8 +70,18 @@ function removeNullFalse($var) {
 
 // Handle special taxa
 function handleTaxon($taxon) {
+
+  $conversions = Array();
+  $conversions['Taraxacum officinale'] = "Taraxacum";
+  $conversions['Alchemilla vulgaris'] = "Alchemilla";
+  $conversions['Pteridium aquilinum'] = "Pteridium pinetorum";
+  $conversions['Ranunculus auricomus'] = "Ranunculus auricomus -ryhmä s. lat.";
+
   if ("Life" === $taxon || "" === $taxon || "unknown" === $taxon || FALSE === $taxon || NULL === $taxon) {
     return "Biota";
+  }
+  elseif (isset($conversions[$taxon])) {
+    return $conversions[$taxon];
   }
   else {
     return $taxon;

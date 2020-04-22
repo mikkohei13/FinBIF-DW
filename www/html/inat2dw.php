@@ -5,6 +5,8 @@
 
 function observationInat2Dw($inat) {
 
+//  print_r ($inat); // DEBUG
+
   $dw = Array();
 
   /*
@@ -141,7 +143,10 @@ function observationInat2Dw($inat) {
     // Coordinate accuracy
     $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "WGS84";
 
-    if (empty($inat['positional_accuracy'])) {
+    if ("obscured" == $inat['geoprivacy']) { // Or use obscured = 1 ?
+      $accuracy = 20000; // Default for obcured in Finland. TODO better: bounding box based on rounded wgs84 decimal coordinates? Or at least take center point of the box and use 20km accuracy.
+    }
+    elseif (empty($inat['positional_accuracy'])) {
       $accuracy = 1000; // Default for missing values
     }
     elseif ($inat['positional_accuracy'] < 10) {
@@ -263,8 +268,9 @@ function observationInat2Dw($inat) {
 
 
   // Taxon
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['taxon']['name']);
-  $factsArr = factsArrayPush($factsArr, "U", "taxonVerbatim", handleTaxon($inat['species_guess']));
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['taxon']['name']); // scientific name iNat interprets this to be, special cases converted by this script to match FinBIF taxonomy
+  $factsArr = factsArrayPush($factsArr, "U", "taxonByUser", handleTaxon($inat['species_guess'])); // name observer(?) has given, can be any language
+  $factsArr = factsArrayPush($factsArr, "U", "taxonInterpretationByiNaturalist", $inat['taxon']['name']); // scientific name iNat interprets this to be
 
 
   // Observations fields
@@ -305,9 +311,10 @@ function observationInat2Dw($inat) {
   // Misc facts
   $factsArr = factsArrayPush($factsArr, "U", "out_of_range", $inat['out_of_range'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "taxon_geoprivacy", $inat['taxon_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "context_geoprivacy", $inat['context_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE);
-  $factsArr = factsArrayPush($factsArr, "U", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE);
+  $factsArr = factsArrayPush($factsArr, "U", "geoprivacy", $inat['geoprivacy'], FALSE); // New 4/2020?
+  $factsArr = factsArrayPush($factsArr, "U", "context_geoprivacy", $inat['context_geoprivacy'], FALSE); // Is this used anymore 4/2020?
+  $factsArr = factsArrayPush($factsArr, "U", "context_user_geoprivacy", $inat['context_user_geoprivacy'], FALSE); // Is this used anymore 4/2020?
+  $factsArr = factsArrayPush($factsArr, "U", "context_taxon_geoprivacy", $inat['context_taxon_geoprivacy'], FALSE); // Is this used anymore 4/2020?
   $factsArr = factsArrayPush($factsArr, "U", "comments_count", $inat['comments_count'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_agreements", $inat['num_identification_agreements'], FALSE);
   $factsArr = factsArrayPush($factsArr, "U", "num_identification_disagreements", $inat['num_identification_disagreements'], FALSE);
