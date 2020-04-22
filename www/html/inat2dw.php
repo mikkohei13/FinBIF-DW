@@ -193,31 +193,37 @@ function observationInat2Dw($inat) {
       $factsArr = factsArrayPush($factsArr, "U", "imageId", $photo['photo']['id']); // Photo id
       $factsArr = factsArrayPush($factsArr, "U", "imageUrl", "https://www.inaturalist.org/photos/" . $photo['photo']['id']); // Photo link
 
-      // Photos via proxy
-      $squareUrl = $photo['photo']['url'];
+      // CC-licensed photos via proxy
+      if (!empty($photo['photo']['license_code'])) {
+        $squareUrl = $photo['photo']['url'];
 
-      $thumbnailUrl = str_replace("square", "small", $squareUrl);
-      $thumbnailUrl = str_replace("https://static.inaturalist.org/photos/", "https://proxy.laji.fi/inaturalist/photos/", $thumbnailUrl); // TODO: refactor into helper
+        $thumbnailUrl = str_replace("square", "small", $squareUrl);
+        $thumbnailUrl = str_replace("https://static.inaturalist.org/photos/", "https://proxy.laji.fi/inaturalist/photos/", $thumbnailUrl); // TODO: refactor into helper
 
-      $fullUrl = str_replace("square", "original", $squareUrl);
-      $fullUrl = str_replace("https://static.inaturalist.org/photos/", "https://proxy.laji.fi/inaturalist/photos/", $fullUrl); // TODO: refactor
+        $fullUrl = str_replace("square", "original", $squareUrl);
+        $fullUrl = str_replace("https://static.inaturalist.org/photos/", "https://proxy.laji.fi/inaturalist/photos/", $fullUrl); // TODO: refactor
 
-      $media = Array();
+        $media = Array();
 
-      $media['thumbnailURL'] = $thumbnailUrl;
-      $media['copyrightOwner'] = $photo['photo']['attribution'];
-      $media['author'] = $photo['photo']['attribution']; // TODO: or simply observer name
-      $media['fullURL'] = $fullUrl;
-      $media['licenseId'] = getLicenseUrl($photo['photo']['license_code']);
-      $media['mediaType'] = "IMAGE";
+        $media['thumbnailURL'] = $thumbnailUrl;
+        $media['copyrightOwner'] = $photo['photo']['attribution'];
+        $media['author'] = $photo['photo']['attribution']; // TODO: or simply observer name
+        $media['fullURL'] = $fullUrl;
+        $media['licenseId'] = getLicenseUrl($photo['photo']['license_code']);
+        $media['mediaType'] = "IMAGE";
 
-      $dw['publicDocument']['gatherings'][0]['units'][0]['media'][] = $media;
+        $dw['publicDocument']['gatherings'][0]['units'][0]['media'][] = $media;
+      }
+      else {
+        array_push($keywordsArr, "image_arr"); // keyword for all rights reserved -images
+      }
 
     }
     $factsArr = factsArrayPush($factsArr, "U", "imageCount", $photoCount);
   }
 
   // Sounds
+  // Note: if audio is linked via proxy, need to check that cc-license is given 
   $soundCount = count($inat['sounds']);
   if ($soundCount >= 1) {
     array_push($keywordsArr, "has_audio"); // not needed if we use media object

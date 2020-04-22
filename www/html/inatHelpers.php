@@ -190,8 +190,7 @@ function getLicenseUrl($licenseCode) {
       $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-NC-SA-4.0";
       break;
     default:
-      $ret = "http://tun.fi/MZ.intellectualRightsCC-BY-NC-ND-4.0"; // Default to strictest license
-//      $ret = "http://tun.fi/MZ.intellectualRightsARR"; // Default to ARR
+      $ret = "http://tun.fi/MZ.intellectualRightsARR"; // Default to ARR (in iNat, empty license means ARR)
       break;
   }
   return $ret;
