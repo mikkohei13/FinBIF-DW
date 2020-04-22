@@ -5,7 +5,7 @@
 
 function observationInat2Dw($inat) {
 
-//  print_r ($inat); // DEBUG
+  print_r ($inat); // DEBUG
 
   $dw = Array();
 
@@ -140,32 +140,51 @@ function observationInat2Dw($inat) {
 
   // Coordinates
   if ($inat['mappable']) {
-    // Coordinate accuracy
     $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "WGS84";
 
+
+    // TODO: observation without coordinates
+
+    // Obscured observation
     if ("obscured" == $inat['geoprivacy']) { // Or use obscured = 1 ?
       $accuracy = 20000; // Default for obcured in Finland. TODO better: bounding box based on rounded wgs84 decimal coordinates? Or at least take center point of the box and use 20km accuracy.
+
+      // Bounding box coordinates
+      $lon = substr(removeNullFalse($inat['geojson']['coordinates'][0]), 0, 4);
+      $lat = substr(removeNullFalse($inat['geojson']['coordinates'][1]), 0, 4);
+
+      $dw['publicDocument']['gatherings'][0]['coordinates']['lonMin'] = $lon - 0.1;
+      $dw['publicDocument']['gatherings'][0]['coordinates']['lonMax'] = $lon + 0.1;
+      $dw['publicDocument']['gatherings'][0]['coordinates']['latMin'] = $lat - 0.1;
+      $dw['publicDocument']['gatherings'][0]['coordinates']['latMax'] = $lat + 0.1;  
+
+      $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = 0;
     }
-    elseif (empty($inat['positional_accuracy'])) {
-      $accuracy = 1000; // Default for missing values
-    }
-    elseif ($inat['positional_accuracy'] < 10) {
-      $accuracy = 10; // Minimum value
-    }
+
+    // Non-obscured observation
     else {
-      $accuracy = round($inat['positional_accuracy'], 0); // Round to one meter
+      if (empty($inat['positional_accuracy'])) {
+        $accuracy = 10000; // Default for missing values
+      }
+      elseif ($inat['positional_accuracy'] < 10) {
+        $accuracy = 10; // Minimum value
+      }
+      else {
+        $accuracy = round($inat['positional_accuracy'], 0); // Round to one meter
+      }
+      $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = $accuracy;
+
+      // Point coordinates
+      // Rounding, see https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude/8674#8674
+      $lon = round(removeNullFalse($inat['geojson']['coordinates'][0]), 6);
+      $lat = round(removeNullFalse($inat['geojson']['coordinates'][1]), 6);
+
+      $dw['publicDocument']['gatherings'][0]['coordinates']['lonMin'] = $lon;
+      $dw['publicDocument']['gatherings'][0]['coordinates']['lonMax'] = $lon;
+      $dw['publicDocument']['gatherings'][0]['coordinates']['latMin'] = $lat;
+      $dw['publicDocument']['gatherings'][0]['coordinates']['latMax'] = $lat;  
     }
-    $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = $accuracy;
 
-    // Coordinates
-    // Rounding, see https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude/8674#8674
-    $lon = round(removeNullFalse($inat['geojson']['coordinates'][0]), 6);
-    $lat = round(removeNullFalse($inat['geojson']['coordinates'][1]), 6);
-
-    $dw['publicDocument']['gatherings'][0]['coordinates']['lonMin'] = $lon;
-    $dw['publicDocument']['gatherings'][0]['coordinates']['lonMax'] = $lon;
-    $dw['publicDocument']['gatherings'][0]['coordinates']['latMin'] = $lat;
-    $dw['publicDocument']['gatherings'][0]['coordinates']['latMax'] = $lat;
   }
 
 
