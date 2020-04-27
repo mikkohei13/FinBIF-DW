@@ -5,7 +5,7 @@
 
 function observationInat2Dw($inat) {
 
-  print_r ($inat); // DEBUG
+//  print_r ($inat); // DEBUG
 
   $dw = Array();
 
@@ -55,6 +55,11 @@ function observationInat2Dw($inat) {
   if (!in_array(7020, $inat['place_ids'])) {
     log2("WARNING", "Skipped observation not from Finland: " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
+  }
+
+  // Non-wild (captive)
+  if (1 == $inat['captive']) {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['wild'] = false;
   }
 
 //  echo "HERE GOES obs ".$inat['id'].":\n"; print_r ($inat); // debug

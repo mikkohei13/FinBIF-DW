@@ -398,7 +398,7 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
 
   $updatedSince = urlencode($updatedSince);
 
-  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove;
+  $url = "http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove;
   log2("NOTICE", $url, "log/inat-obs-log.log");
 
   log2("NOTICE", "Fetching $perPage obs with updatedSince $updatedSince", "log/inat-obs-log.log");
@@ -409,7 +409,7 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
 }
 
 function getObsArr_basedOnId($idAbove, $perPage) {
-  $url = "http://api.inaturalist.org/v1/observations?captive=false&license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove;
+  $url = "http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove;
   log2("NOTICE", $url, "log/inat-obs-log.log");
 
   log2("NOTICE", "Fetching $perPage obs with idAbove $idAbove", "log/inat-obs-log.log");
