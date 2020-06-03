@@ -186,6 +186,15 @@ CC-BY-NC-ND 30
 no license (calculated from total) 5721 (28%)
 
 
+http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=100&order=asc&order_by=id&updated_since=2020-05-16T00%3A51%3A12%2B00%3A00
+
+CC
+10974 = 40 %
+
+total
+27046
+
+
 - Annotated photos (5,089 species, 675,000 images) for computer vision training etc.: https://www.kaggle.com/c/inaturalist-challenge-at-fgvc-2017
 - DwCA (400+ MB) of research-grade observations, updated weekly http://www.inaturalist.org/observations/gbif-observations-dwca.zip
 

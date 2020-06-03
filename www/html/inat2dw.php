@@ -32,10 +32,12 @@ function observationInat2Dw($inat) {
   if (!empty($inat['flags'])) {
     log2("WARNING", "Skipped observation having flag(s): " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
+    // TODO: delete if already in DW?
   }
   if ("Homo sapiens" == $inat['taxon']['name']) {
     log2("WARNING", "Skipped observation of human(s): " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
+    // TODO: delete if already in DW?
   }
   if (NULL == $inat['observed_on_details']) {
     log2("WARNING", "Skipped observation without date: " . $inat['id'], "log/inat-obs-log.log");

@@ -8,7 +8,7 @@ require_once "_secrets.php";
 require_once "postToAPI.php";
 
 ini_set("default_socket_timeout", 90); // Timeout for file_get_contents
-const SLEEP_SECONDS = 5;
+const SLEEP_SECONDS = 10;
 
 
 // ------------------------------------------------------------------------------------------------
