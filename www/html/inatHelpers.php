@@ -230,3 +230,15 @@ function hashInatObservation($inat) {
   // Hash
   return sha1(serialize($inat));
 }
+
+function hasSpecimen($observationFields) {
+  foreach ($observationFields as $nro => $fieldArr) {
+    if ("Specimen" == $fieldArr['name']) {
+      if ("yes" == $fieldArr['value']) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+}
+

@@ -79,7 +79,7 @@ function observationInat2Dw($inat) {
   $dw['schema'] = "laji-etl";
   $dw['publicDocument']['secureLevel'] = "NONE";
   $dw['publicDocument']['concealment'] = "PUBLIC";
-  $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "HUMAN_OBSERVATION_UNSPECIFIED";
+  
 
   $keywordsArr = Array();
   $descArr = Array();
@@ -88,7 +88,6 @@ function observationInat2Dw($inat) {
 
   // Debug error handling
 //  $foo = $inat['foobar'];
-
 
   // Id's
 //  $documentId = "https://www.inaturalist.org/observations/" . $inat['id']; // Note: GBIF also uses this as an occurrence ID  
@@ -273,6 +272,22 @@ function observationInat2Dw($inat) {
     array_push($keywordsArr, "no_media"); // To search for obs which cannot be verified
   }
 
+
+  // Record basis
+  if ($inat['ofvs']) {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "PRESERVED_SPECIMEN";
+  }
+  elseif ($photoCount >= 1) {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "HUMAN_OBSERVATION_PHOTO";
+  }
+  elseif ($soundCount >= 1) {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "HUMAN_OBSERVATION_RECORDED_AUDIO";
+  }
+  else {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "HUMAN_OBSERVATION_UNSPECIFIED";
+  }
+
+
   // Tags
   if (!empty($inat['tags'])) {
     foreach ($inat['tags'] as $tagNro => $tag) {
@@ -298,9 +313,14 @@ function observationInat2Dw($inat) {
 
 
   // Taxon
-  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['taxon']['name']); // scientific name iNat interprets this to be, special cases converted by this script to match FinBIF taxonomy
-  $factsArr = factsArrayPush($factsArr, "U", "taxonByUser", handleTaxon($inat['species_guess'])); // name observer(?) has given, can be any language
-  $factsArr = factsArrayPush($factsArr, "U", "taxonInterpretationByiNaturalist", $inat['taxon']['name']); // scientific name iNat interprets this to be
+  // scientific name iNat interprets this to be, special cases converted by this script to match FinBIF taxonomy
+  $dw['publicDocument']['gatherings'][0]['units'][0]['taxonVerbatim'] = handleTaxon($inat['taxon']['name']);
+
+  // name observer or identifiers(?) have given, can be any language
+  $factsArr = factsArrayPush($factsArr, "U", "taxonByUser", handleTaxon($inat['species_guess']));
+
+  // scientific name iNat interprets this to be
+  $factsArr = factsArrayPush($factsArr, "U", "taxonInterpretationByiNaturalist", $inat['taxon']['name']);
 
 
   // Observations fields
