@@ -62,6 +62,10 @@ if ("single" == $_GET['mode']) {
   $data = getObsArr_singleId($_GET['key']);
 
   $obs = $data['results'][0]; // In this case just one observation
+  if ("dryrun" == $_GET['destination']) {
+    print_r ($obs); // debug
+  }
+  
   $dwObs = observationInat2Dw($obs);
   if ($dwObs) {
     $dwObservations[] = $dwObs;
