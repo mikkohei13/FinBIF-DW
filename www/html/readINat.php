@@ -63,6 +63,7 @@ if ("single" == $_GET['mode']) {
 
   $obs = $data['results'][0]; // In this case just one observation
   if ("dryrun" == $_GET['destination']) {
+    echo "DATA FROM INATURALIST:\n"; // debug
     print_r ($obs); // debug
   }
   
@@ -359,6 +360,7 @@ function pushFactory($data, $destination) {
   }
   else {
     if ("dryrun" == $destination) {
+      echo "DATA CONVERTED TO DW FORMAT:\n"; // debug
       print_r ($data);
     }
     else {

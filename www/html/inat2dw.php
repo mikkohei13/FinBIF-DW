@@ -38,19 +38,22 @@ function observationInat2Dw($inat) {
     log2("WARNING", "Skipped observation without identification: " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
+  // TODO: If human, clear description etc.
+  /*
   if ("Homo sapiens" == $inat['taxon']['name']) {
     log2("WARNING", "Skipped observation of human(s): " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
     // TODO: delete if already in DW?
   }
+  */
   if (NULL == $inat['observed_on_details']) {
     log2("WARNING", "Skipped observation without date: " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
 
-  // Filter mikkohei13's observations (would be duplicates)
+  // Filter testaaja's observations
   /*
-  $vihkoUsers[] = "mikkohei13";
+  $vihkoUsers[] = "testaaja";
   if (in_array($inat['user']['login'], $vihkoUsers)) {
     log2("WARNING", "Skipped observation by Vihko user: user " . $inat['user']['login']. ", obs " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
@@ -85,7 +88,6 @@ function observationInat2Dw($inat) {
   $descArr = Array();
   $factsArr = Array();
 
-
   // Debug error handling
 //  $foo = $inat['foobar'];
 
@@ -111,10 +113,16 @@ function observationInat2Dw($inat) {
   } 
 
   // Quality metrics
+  $qualityMetricUnreliable = FALSE;
   if ($inat['quality_metrics']) {
     $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
     foreach ($qualityMetrics as $key => $value) {
       $factsArr = factsArrayPush($factsArr, "U", "quality_metrics_" . $key, $value, TRUE);
+
+      // If at least one negative quality metric -> unreliable
+      if (-1 == $value) {
+        $qualityMetricUnreliable = TRUE;
+      }
     }
   }
 
@@ -375,6 +383,39 @@ function observationInat2Dw($inat) {
 //  $factsArr = factsArrayPush($factsArr, "D", "", $inat(['']);
 
 
+  // DW quality issues
+
+  // TODO:
+  // What to do if observation contains 1...n copyright infringement flaged media files, e.g. https://www.inaturalist.org/observations/46356508
+
+  // Handling flagged obs has not been tested!
+  if (!empty($inat['flags'])) {
+    $dw['publicDocument']['concealment'] = "PRIVATE";
+
+    $dw['publicDocument']['gatherings'][0]['units'][0]['quality']['issue']['issue'] = "REPORTED_UNRELIABLE";
+    $dw['publicDocument']['gatherings'][0]['units'][0]['quality']['issue']['source'] = "ORIGINAL_DOCUMENT";
+
+    array_push($keywordsArr, "flagged");
+  }
+
+  // Negative quality metrics (thumbs down) 
+  if ($qualityMetricUnreliable) {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['quality']['issue']['issue'] = "REPORTED_UNRELIABLE";
+    $dw['publicDocument']['gatherings'][0]['units'][0]['quality']['issue']['source'] = "ORIGINAL_DOCUMENT";
+
+    array_push($keywordsArr, "quality-metric-unreliable");
+  }
+
+  // Humans
+  if ("Homo sapiens" == $inat['taxon']['name']) {
+    $dw['publicDocument']['concealment'] = "PRIVATE";
+
+    // Remove images
+    unset($dw['publicDocument']['gatherings'][0]['units'][0]['media']);
+
+    // Clear description
+    $descArr = Array();
+  }
 
   // ----------------------------------------------------------------------------------------
 
