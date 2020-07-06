@@ -113,6 +113,7 @@ function observationInat2Dw($inat) {
   } 
 
   // Quality metrics
+  // Not that the iNat API displays quality metric changes with a delay (maybe 15 mins??)
   $qualityMetricUnreliable = FALSE;
   if ($inat['quality_metrics']) {
     $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
@@ -157,16 +158,15 @@ function observationInat2Dw($inat) {
 
 
   // Coordinates
-  if ($inat['mappable']) {
+  if ($inat['mappable']) { // ABBA
     $dw['publicDocument']['gatherings'][0]['coordinates']['type'] = "WGS84";
 
 
     // TODO: observation without coordinates
 
     // Obscured observation
-    if ("obscured" == $inat['geoprivacy']) { // Or use obscured = 1 ?
-      $accuracy = 20000; // Default for obcured in Finland. TODO better: bounding box based on rounded wgs84 decimal coordinates? Or at least take center point of the box and use 20km accuracy.
-
+    if (TRUE === $inat['obscured']) { // Alternative: ("obscured" == geoprivacy || "obscured" = taxon_geoprivacy)
+      echo "HERE1";
       // Bounding box coordinates
       $lon = substr(removeNullFalse($inat['geojson']['coordinates'][0]), 0, 4);
       $lat = substr(removeNullFalse($inat['geojson']['coordinates'][1]), 0, 4);
@@ -181,11 +181,12 @@ function observationInat2Dw($inat) {
 
     // Non-obscured observation
     else {
+      echo "HERE2";
       if (empty($inat['positional_accuracy'])) {
-        $accuracy = 10000; // Default for missing values
+        $accuracy = 100; // Default for missing values. Mobile app often misses the value, even if the coordinates are accurate.
       }
       elseif ($inat['positional_accuracy'] < 10) {
-        $accuracy = 10; // Minimum value
+        $accuracy = 5; // Minimum value
       }
       else {
         $accuracy = round($inat['positional_accuracy'], 0); // Round to one meter
@@ -361,7 +362,6 @@ function observationInat2Dw($inat) {
   $factsArr = factsArrayPush($factsArr, "U", "quality_grade", $inat['quality_grade'] . "_grade");
   array_push($keywordsArr, $inat['quality_grade'] . "_grade");
 
-
   // License URL's/URI's
   $dw['publicDocument']['licenseId'] = getLicenseUrl($inat['license_code']);
 
@@ -383,7 +383,7 @@ function observationInat2Dw($inat) {
 //  $factsArr = factsArrayPush($factsArr, "D", "", $inat(['']);
 
 
-  // DW quality issues
+  // DW quality issues & tags
 
   // TODO:
   // What to do if observation contains 1...n copyright infringement flaged media files, e.g. https://www.inaturalist.org/observations/46356508
@@ -407,8 +407,9 @@ function observationInat2Dw($inat) {
   }
 
   // Humans
+  // DW removed/hides humans, so this is not really needed. Saved for possible future use. 
   if ("Homo sapiens" == $inat['taxon']['name']) {
-    $dw['publicDocument']['concealment'] = "PRIVATE";
+//    $dw['publicDocument']['concealment'] = "PRIVATE";
 
     // Remove images
     unset($dw['publicDocument']['gatherings'][0]['units'][0]['media']);
@@ -417,9 +418,16 @@ function observationInat2Dw($inat) {
     $descArr = Array();
   }
 
+/*
+  // Not yet supported by DW
+  if ("research" == $inat['quality_grade']) {
+    $dw['publicDocument']['gatherings'][0]['units'][0]['sourceTags'][] = "COMMUNITY_TAG_VERIFIED";
+  }
+*/
+
   // ----------------------------------------------------------------------------------------
 
-  // Handle temporary arrays 
+  // Handle temporary arrays
   $dw['publicDocument']['keywords'] = $keywordsArr;
   $dw['publicDocument']['gatherings'][0]['notes'] = implode(" / ", $descArr);
 
