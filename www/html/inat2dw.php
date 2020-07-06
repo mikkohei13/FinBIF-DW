@@ -117,13 +117,19 @@ function observationInat2Dw($inat) {
   $qualityMetricUnreliable = FALSE;
   if ($inat['quality_metrics']) {
     $qualityMetrics = summarizeQualityMetrics($inat['quality_metrics']);
+
+    print_r ($qualityMetrics);
     foreach ($qualityMetrics as $key => $value) {
       $factsArr = factsArrayPush($factsArr, "U", "quality_metrics_" . $key, $value, TRUE);
 
       // If at least one negative quality metric -> unreliable
-      if (-1 == $value) {
-        $qualityMetricUnreliable = TRUE;
+      // Exception: non-wild -> not unreliable
+      if ("wild" != $key) {
+        if (-1 == $value) {
+          $qualityMetricUnreliable = TRUE;
+        }
       }
+
     }
   }
 
@@ -166,7 +172,6 @@ function observationInat2Dw($inat) {
 
     // Obscured observation
     if (TRUE === $inat['obscured']) { // Alternative: ("obscured" == geoprivacy || "obscured" = taxon_geoprivacy)
-      echo "HERE1";
       // Bounding box coordinates
       $lon = substr(removeNullFalse($inat['geojson']['coordinates'][0]), 0, 4);
       $lat = substr(removeNullFalse($inat['geojson']['coordinates'][1]), 0, 4);
@@ -184,7 +189,6 @@ function observationInat2Dw($inat) {
 
     // Non-obscured observation
     else {
-      echo "HERE2";
       if (empty($inat['positional_accuracy'])) {
         $accuracy = 100; // Default for missing values. Mobile app often misses the value, even if the coordinates are accurate.
       }
@@ -403,6 +407,7 @@ function observationInat2Dw($inat) {
 
   // Negative quality metrics (thumbs down) 
   if ($qualityMetricUnreliable) {
+    // ABBA if only wildness, no issues
     $dw['publicDocument']['gatherings'][0]['units'][0]['quality']['issue']['issue'] = "REPORTED_UNRELIABLE";
     $dw['publicDocument']['gatherings'][0]['units'][0]['quality']['issue']['source'] = "ORIGINAL_DOCUMENT";
 
