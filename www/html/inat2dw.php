@@ -265,7 +265,7 @@ function observationInat2Dw($inat) {
         $dw['publicDocument']['gatherings'][0]['units'][0]['media'][] = $media;
       }
       else {
-        array_push($keywordsArr, "image_arr"); // keyword for all rights reserved -images
+        array_push($keywordsArr, "image_arr"); // keyword for all rights reserved -images. Will be given if at least one photo is missing license.
       }
 
     }
