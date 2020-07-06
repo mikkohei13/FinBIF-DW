@@ -389,6 +389,9 @@ function observationInat2Dw($inat) {
   $factsArr = factsArrayPush($factsArr, "U", "owners_identification_from_vision", $inat['owners_identification_from_vision'], FALSE);
 //  $factsArr = factsArrayPush($factsArr, "D", "", $inat(['']);
 
+// OAuth_application_id: blank = website, 2 = android, 3 = iOS, other = third-party apps
+  $factsArr = factsArrayPush($factsArr, "U", "oauth_application_id", $inat['oauth_application_id'], FALSE);
+
 
   // DW quality issues & tags
 
