@@ -170,11 +170,14 @@ function observationInat2Dw($inat) {
       // Bounding box coordinates
       $lon = substr(removeNullFalse($inat['geojson']['coordinates'][0]), 0, 4);
       $lat = substr(removeNullFalse($inat['geojson']['coordinates'][1]), 0, 4);
+//      echo "LON:" . $lon;
 
+      // Conservative bounding box calculation: this is less accurate than the box shown on the iNat website, but the true location is definitely inside this box.
+      // Todo: Find out how the bounding box on iNat observation page is calculated - how do they know which 0.2x0.2 square to draw? It's not on the API.
       $dw['publicDocument']['gatherings'][0]['coordinates']['lonMin'] = $lon - 0.1;
-      $dw['publicDocument']['gatherings'][0]['coordinates']['lonMax'] = $lon + 0.1;
+      $dw['publicDocument']['gatherings'][0]['coordinates']['lonMax'] = $lon + 0.2;
       $dw['publicDocument']['gatherings'][0]['coordinates']['latMin'] = $lat - 0.1;
-      $dw['publicDocument']['gatherings'][0]['coordinates']['latMax'] = $lat + 0.1;  
+      $dw['publicDocument']['gatherings'][0]['coordinates']['latMax'] = $lat + 0.2;  
 
       $dw['publicDocument']['gatherings'][0]['coordinates']['accuracyInMeters'] = 0;
     }
