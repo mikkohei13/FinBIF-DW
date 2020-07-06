@@ -429,12 +429,10 @@ function observationInat2Dw($inat) {
     $descArr = Array();
   }
 
-/*
-  // Not yet supported by DW
+  // Community verified observations
   if ("research" == $inat['quality_grade']) {
     $dw['publicDocument']['gatherings'][0]['units'][0]['sourceTags'][] = "COMMUNITY_TAG_VERIFIED";
   }
-*/
 
   // ----------------------------------------------------------------------------------------
 
