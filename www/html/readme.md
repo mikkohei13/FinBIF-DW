@@ -16,6 +16,19 @@ Setup:
 - Set up crontabs
 
 
+Fetching data:
+
+Fetch all modified after time set in database.
+http://localhost/readINat.php?mode=newUpdate&key=1&destination=production
+
+Fetch all modified after time set in database, that have id above 1000000. This is useful when restarting a failed run, just copy the latest successful id from the log file.
+http://localhost/readINat.php?mode=newUpdate&key=1000000&destination=production
+
+Fetch only those marked as captive/cultivated, and modified after time set in database. This is useful to run occasionally for old observations, to marke them as nonWild in DW.
+http://localhost/readINat.php?mode=newUpdate&key=1&destination=production
+
+
+
 # How this works?
 
 readInt.php

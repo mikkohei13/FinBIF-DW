@@ -164,6 +164,13 @@ elseif ("manual" == $_GET['mode']) {
 
 elseif ("newUpdate" == $_GET['mode']) {
 
+  if (isset($_GET['nonWilds'])) {
+    $nonWilds = TRUE;
+  }
+  else {
+    $nonWilds = FALSE;
+  }
+
   $perPage = 100;
 //  $perPage = 2; // Debug
 
@@ -176,9 +183,11 @@ elseif ("newUpdate" == $_GET['mode']) {
 
   log2("NOTICE", "Started: newUpdate with perPage $perPage, getLimit $getLimit", "log/inat-obs-log.log");
 
+/*
   if (isset($_GET['key'])) {
     log2("WARNING", "Note that key param has no effect in this mode.", "log/inat-obs-log.log");
   }
+*/
 
   // Need to generate update time here, since observations are coming from the API in random order -> cannot use their times
   // NOTE: Timezone depends on server time settings
@@ -188,7 +197,7 @@ elseif ("newUpdate" == $_GET['mode']) {
 
   $updatedSince = $database->getLatestUpdate();
 
-  $idAbove = 0; // start value
+  $idAbove = $_GET['key']; // start value
 
   $i = 1;
 
@@ -197,7 +206,7 @@ elseif ("newUpdate" == $_GET['mode']) {
 
     log2("D", "$idAbove, $perPage, $updatedSince", "log/inat-obs-log.log");
 
-    $data = getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince);
+    $data = getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince, $nonWilds);
 
     // If no more observations
     if (0 === $data['total_results']) {
@@ -399,7 +408,7 @@ function compileDwJson($dwObservations) {
   }
 }
 
-function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
+function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince, $nonWilds = FALSE) {
 //  https://api.inaturalist.org/v1/observations?updated_since=2019-09-25T18%3A00%3A00&order=desc&order_by=created_at
 
   $updatedSince = urlencode($updatedSince);
@@ -407,7 +416,14 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince) {
   // CC-licensed
 //  $url = "http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
   // All, including license missing
-  $url = "http://api.inaturalist.org/v1/observations?place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
+
+  if ($nonWilds) {
+    $captive = "captive=true&";
+  }
+  else {
+    $captive = "";
+  }
+  $url = "http://api.inaturalist.org/v1/observations?" . $captive . "place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
 
   log2("NOTICE", $url, "log/inat-obs-log.log");
 
