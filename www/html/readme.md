@@ -25,7 +25,7 @@ Fetch all modified after time set in database, that have id above 1000000. This 
 http://localhost/readINat.php?mode=newUpdate&key=1000000&destination=production
 
 Fetch only those marked as captive/cultivated, and modified after time set in database. This is useful to run occasionally for old observations, to marke them as nonWild in DW.
-http://localhost/readINat.php?mode=newUpdate&key=1&destination=production
+http://localhost/readINat.php?mode=newUpdate&key=1&destination=production&nonWilds=true
 
 
 

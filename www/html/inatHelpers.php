@@ -76,6 +76,10 @@ function handleTaxon($taxon) {
   $conversions['Alchemilla vulgaris'] = "Alchemilla";
   $conversions['Pteridium aquilinum'] = "Pteridium pinetorum";
   $conversions['Ranunculus auricomus'] = "Ranunculus auricomus -ryhmä s. lat.";
+  $conversions['Bombus lucorum-complex'] = "Bombus lucorum coll.";
+  $conversions['Chrysoperla carnea-group'] = "Chrysoperla";
+  $conversions['Potentilla argentea'] = "Potentilla argentea -ryhmä";
+  $conversions['Chenopodium album'] = "Chenopodium album -ryhmä";
 
   if ("Life" === $taxon || "" === $taxon || "unknown" === $taxon || FALSE === $taxon || NULL === $taxon) {
     return "Biota";
