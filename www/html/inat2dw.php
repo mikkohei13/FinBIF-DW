@@ -290,7 +290,7 @@ function observationInat2Dw($inat) {
 
 
   // Record basis
-  if ($inat['ofvs']) {
+  if (hasSpecimen($inat['ofvs'])) {
     $dw['publicDocument']['gatherings'][0]['units'][0]['recordBasis'] = "PRESERVED_SPECIMEN";
   }
   elseif ($photoCount >= 1) {

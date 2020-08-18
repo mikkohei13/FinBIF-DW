@@ -80,6 +80,7 @@ function handleTaxon($taxon) {
   $conversions['Chrysoperla carnea-group'] = "Chrysoperla";
   $conversions['Potentilla argentea'] = "Potentilla argentea -ryhmä";
   $conversions['Chenopodium album'] = "Chenopodium album -ryhmä";
+  $conversions['Imparidentia'] = "Heterodonta"; // hieta- ja liejusimpukan alin yhteinen taksoni
 
   if ("Life" === $taxon || "" === $taxon || "unknown" === $taxon || FALSE === $taxon || NULL === $taxon) {
     return "Biota";
@@ -242,7 +243,7 @@ function hasSpecimen($observationFields) {
         return TRUE;
       }
     }
-    return FALSE;
   }
+  return FALSE;
 }
 
