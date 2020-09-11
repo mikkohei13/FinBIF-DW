@@ -414,7 +414,7 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince, $nonWi
   $updatedSince = urlencode($updatedSince);
 
   // CC-licensed
-//  $url = "http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
+//  $url = "http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020%2C10282&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
   // All, including license missing
 
   if ($nonWilds) {
@@ -425,7 +425,7 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince, $nonWi
   }
 
   // To get only observations with observation fields, add &ofv_datatype=text%2Cnumeric%2Ctaxon
-  $url = "http://api.inaturalist.org/v1/observations?" . $captive . "place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
+  $url = "http://api.inaturalist.org/v1/observations?" . $captive . "place_id=7020%2C10282&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
 
   log2("NOTICE", $url, "log/inat-obs-log.log");
 
@@ -438,9 +438,9 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince, $nonWi
 
 function getObsArr_basedOnId($idAbove, $perPage) {
   // CC-licensed
-//  $url = "http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove . "&include_new_projects=true";
+//  $url = "http://api.inaturalist.org/v1/observations?license=cc-by%2Ccc-by-nc%2Ccc-by-nd%2Ccc-by-sa%2Ccc-by-nc-nd%2Ccc-by-nc-sa%2Ccc0&place_id=7020%2C10282&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove . "&include_new_projects=true";
   // All, including license missing
-  $url = "http://api.inaturalist.org/v1/observations?place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove . "&include_new_projects=true";
+  $url = "http://api.inaturalist.org/v1/observations?place_id=7020%2C10282&page=1&per_page=" . $perPage . "&order=asc&order_by=id&id_above=" . $idAbove . "&include_new_projects=true";
 
   log2("NOTICE", $url, "log/inat-obs-log.log");
 

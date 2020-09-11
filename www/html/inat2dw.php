@@ -60,8 +60,8 @@ function observationInat2Dw($inat) {
   }
   */
 
-  // Check that is from Finland
-  if (!in_array(7020, $inat['place_ids'])) {
+  // Check that is from Finland 7020 or Åland 10282
+  if (!in_array(7020, $inat['place_ids']) && !in_array(10282, $inat['place_ids'])) {
     log2("WARNING", "Skipped observation not from Finland: " . $inat['id'], "log/inat-obs-log.log");
     return FALSE;
   }
