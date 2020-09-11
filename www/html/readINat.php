@@ -423,6 +423,8 @@ function getObsArr_basedOnUpdatedSince($idAbove, $perPage, $updatedSince, $nonWi
   else {
     $captive = "";
   }
+
+  // To get only observations with observation fields, add &ofv_datatype=text%2Cnumeric%2Ctaxon
   $url = "http://api.inaturalist.org/v1/observations?" . $captive . "place_id=7020&page=1&per_page=" . $perPage . "&order=asc&order_by=id&updated_since=" . $updatedSince . "&id_above=" . $idAbove . "&include_new_projects=true";
 
   log2("NOTICE", $url, "log/inat-obs-log.log");
